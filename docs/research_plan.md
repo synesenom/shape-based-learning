@@ -241,23 +241,43 @@ Stating these in advance is what makes the study a test rather than a demo.
 
 Estimates assume one person with a single GPU; the GNN side is CPU-cheap.
 
-### WP0. Experimental hygiene (1 week)
+### WP0. Experimental hygiene (1 week) -- BUILT
 
-Blocks every later result.
+Blocks every later result. Protocol and caveats:
+`docs/experiment_protocol.md`. Implementation:
+`scripts/run_experiment.py`, `scripts/plot_results.py`,
+`src/shapeprim/experiment.py`, `src/shapeprim/data/augment.py`.
 
-1. Train/val/test split with a fixed validation seed; model selection and
-   early stopping on val only; test evaluated once per run.
-2. CNN training: cosine or step schedule, warm-up, weight decay sweep; SGD
-   and Adam both tried; document the budget.
-3. Standard augmentation for the CNN (random affine: translate, scale,
-   optionally rotate; horizontal flip *off*, since it changes some classes)
-   as a config flag, with results reported with and without.
-4. Sweep driver that writes `results/<phase>/<experiment>/<run_id>/`
-   (config, seed, metrics, extractor P/R/F1) per PLAN.md §4, and one plotting
-   script for learning curves and shift tables.
-5. Cache extracted graphs to disk keyed by (generator config, seed, index,
-   extractor name); GPU device flag.
-6. 3 seeds minimum, 5 for any headline number; report mean +/- 95 % CI.
+1. **Done.** Train/val/test drawn from disjoint streams (`split`
+   participates in the per-sample seed derivation), model selection and
+   early stopping on validation, best-validation weights restored, test
+   evaluated once per run.
+2. **Done.** Cosine and step schedules, warm-up, gradient clipping, and a
+   choice of Adam/AdamW/SGD. The budget is an explicit config
+   (`configs/phase1/tuning.yaml`): an identical four-trial grid over
+   (optimizer, learning rate, weight decay) for each side, selected on
+   validation.
+3. **Done.** `AugmentConfig` with presets, reported with and without. Fill
+   colour is the generator background rather than black, and rotation past
+   90 degrees is refused because it maps `tree` onto `arrow_sign`.
+4. **Done.** Sweep driver writing `results/<phase>/<experiment>/<run_id>/`
+   with config, environment, git commit, seed, metrics and extractor
+   P/R/F1, plus a plotting/table script.
+5. **Done.** Extraction cached by a digest of (classes, count, generation
+   config, seed, split, extractor), persisted to disk; `--device` flag with
+   `auto` resolution.
+6. **Done.** Three seeds by default, aggregated with a Student-t 95%
+   interval (4.303 at three seeds, not 1.96); a single-seed result is
+   labelled as such rather than given a zero-width interval.
+
+Found while building it: the dataset wrappers indexed labels against the
+global 10-class vocabulary, so any experiment on a class subset emitted
+labels past the classifier's output layer. Fixed, with regression tests.
+
+Still open in WP0's spirit, deferred to the work packages that need them:
+a train-on-A / test-on-B option in the driver (WP1.4's shift battery), and
+the matched-capacity baseline that makes the 11.2M-vs-57k parameter gap
+defensible (WP2).
 
 ### WP1. Benchmark v2: a primitive grammar, not ten templates (2-3 weeks)
 
