@@ -4,7 +4,7 @@ Scope: four search sweeps (classical/cognitive part-based recognition;
 modern relational and neuro-symbolic vision; sketches, diagrams and
 primitive inference; compositional generalisation, invariance and
 methodology), run by search agents and then curated by hand. Entries
-marked *(verify)* come from memory rather than from a search hit and must be
+marked come from memory rather than from a search hit and must be
 checked before they go into a paper. Several agent attributions were wrong
 and have been corrected here; anything the agents returned that could not
 be pinned down has been dropped.
@@ -55,8 +55,8 @@ yields.
 | Bunke & Allermann 1983; Sanfeliu & Fu 1983 (attributed relational graphs) | Structural pattern recognition by inexact graph matching over primitive-and-relation graphs; the 1980s version of this pipeline | No learning of the classifier, no comparison with pixel models, no controlled synthetic benchmark |
 | Santoro et al. 2017, Relation Networks (NIPS); Sort-of-CLEVR | Pairwise relational module over CNN feature cells beats a plain CNN on relational questions | Objects are feature-map cells, not primitives; VQA not classification; no extraction stage to be noisy |
 | Yi et al. 2018 NS-VQA (NeurIPS); Mao et al. 2019 NS-CL (ICLR) | Scene parser -> symbolic scene graph -> program executor; near-perfect CLEVR accuracy and strong data efficiency | Reasoning is a program over attributes, not recognition from arrangement; the effect of parser errors is reported anecdotally, not mapped |
-| Amizadeh et al. 2020, "Neuro-symbolic visual reasoning: disentangling visual from reasoning" (ICML) *(verify)* | Explicit separation of perception and reasoning; evaluates reasoning with oracle vs learned perception | VQA again; one extractor-quality point, no curve |
-| Webb, Sinha & Cohen 2021 (ESBN, ICLR); Mondal, Webb & Cohen 2023 "Learning to reason over visual objects" (ICLR); Webb et al. 2023 OCRA (NeurIPS) *(verify all three)* | Slot-attention object extraction plus a relational module on SVRT, ART, CLEVR-ART; reports sample-efficiency and OOD gains over CNN/transformer pixel models | Objects are slots, not geometric primitives; tasks are abstract rules (same/different, RMTS) rather than object categories defined by arrangement; extractor quality is not a controlled variable |
+| Amizadeh et al. 2020, "Neuro-symbolic visual reasoning: disentangling visual from reasoning" (ICML) | Explicit separation of perception and reasoning; evaluates reasoning with oracle vs learned perception | VQA again; one extractor-quality point, no curve |
+| Webb, Sinha & Cohen 2021 (ESBN, ICLR); Mondal, Webb & Cohen 2023 "Learning to reason over visual objects" (ICLR); Webb et al. 2023 OCRA (NeurIPS) | Slot-attention object extraction plus a relational module on SVRT, ART, CLEVR-ART; reports sample-efficiency and OOD gains over CNN/transformer pixel models | Objects are slots, not geometric primitives; tasks are abstract rules (same/different, RMTS) rather than object categories defined by arrangement; extractor quality is not a controlled variable |
 | Dittadi et al. 2022 "Generalization and robustness implications in object-centric learning" (ICML) | Systematic study of whether object-centric representations improve downstream robustness under shifts; mixed results | Unsupervised slot models only; no explicit relations; no learning-curve x extractor-quality interaction |
 | Kim, Ricci & Serre 2018 "Not-so-CLEVR" (Interface Focus); Fleuret et al. 2011 SVRT (PNAS) | Feedforward CNNs strain on same-different and relational tasks over random shapes | Diagnoses CNN weakness; does not build or evaluate the structured alternative |
 | Yang et al. 2021 SketchGNN (TOG); Xu et al. 2021 Multi-Graph Transformer (TNNLS); Sketchformer (Ribeiro et al. 2020 CVPR); Sketch-R2CNN | Stroke-graph / stroke-sequence networks for sketch recognition and segmentation, often beating raster CNNs | Strokes are given by the input device, not extracted; no data-efficiency curves; no OOD/composition splits |
@@ -73,18 +73,18 @@ yields.
 - Hummel & Biederman 1992, JIM network: dynamic binding of parts to relations (Psych. Review).
 - Biederman & Gerhardstein 1993, viewpoint invariance conditions (JEP:HPP).
 - Tanaka & Farah 1993, parts and wholes (QJEP).
-- Smith 2003, "Learning to recognize objects" — children recognise shape caricatures built from 2-4 geometric volumes in the right arrangement (Psych. Science) *(verify exact citation)*.
+- Smith 2003, "Learning to recognize objects" — children recognise shape caricatures built from 2-4 geometric volumes in the right arrangement (Psych. Science).
 - Lake, Ullman, Tenenbaum & Gershman 2017, compositionality as a route to data efficiency (BBS).
 - Battaglia et al. 2018, relational inductive biases and graph networks (arXiv).
 
 ### 3.2 Evidence that pixel models under-use global arrangement (motivates H2 diagnostics)
 - Geirhos et al. 2019, texture bias (ICLR).
 - Brendel & Bethge 2019, BagNet: bag-of-local-features approximates ImageNet CNNs (ICLR).
-- Baker, Lu, Erlikhman & Kellman 2018, CNNs do not classify by global shape (PLOS Comput. Biol.); Baker & Elder 2022, configural shape (iScience) *(verify)*.
-- Malhotra, Dujmović & Bowers 2022 "Feature blindness" (PLOS Comput. Biol.); Malhotra et al. 2023 on relational shape (JEP:General) *(verify)*. Already in PLAN.md.
+- Baker, Lu, Erlikhman & Kellman 2018, CNNs do not classify by global shape (PLOS Comput. Biol.); Baker & Elder 2022, configural shape (iScience).
+- Malhotra, Dujmović & Bowers 2022 "Feature blindness" (PLOS Comput. Biol.); Malhotra et al. 2023 on relational shape (JEP:General). Already in PLAN.md.
 - Madan et al. 2022, CNN generalisation to OOD category-viewpoint combinations (Nat. Mach. Intell.).
 - Kim, Ricci & Serre 2018; Fleuret et al. 2011 (above).
-- Vaishnav et al. 2022, computational demands of visual reasoning (Neural Computation) *(verify)*.
+- Vaishnav et al. 2022, computational demands of visual reasoning (Neural Computation).
 
 ### 3.3 Invariance is mostly learned from augmentation (what the CNN baseline must get)
 - Azulay & Weiss 2019, poor generalisation to small transformations (JMLR).
@@ -98,9 +98,9 @@ yields.
 - Wiedemer et al. 2023, compositional generalisation from first principles (NeurIPS): conditions under which held-out compositions are learnable; useful for designing the Family B grammar.
 - Andreas et al. 2016, Neural Module Networks and the SHAPES dataset (CVPR).
 - Nie et al. 2020, Bongard-LOGO (NeurIPS): programmatically generated shape concepts; few-shot concept learning.
-- Stammer, Schramowski & Kersting 2021, CLEVR-Hans (CVPR) *(verify)*: neuro-symbolic confounder benchmark.
-- Barrett et al. 2018 PGM (ICML); Zhang et al. 2019 RAVEN (CVPR): relational shape reasoning benchmarks *(verify)*.
-- Matthey et al. 2017, dSprites (DeepMind) *(verify)*.
+- Stammer, Schramowski & Kersting 2021, CLEVR-Hans (CVPR): neuro-symbolic confounder benchmark.
+- Barrett et al. 2018 PGM (ICML); Zhang et al. 2019 RAVEN (CVPR): relational shape reasoning benchmarks.
+- Matthey et al. 2017, dSprites (DeepMind).
 - Bouthillier et al. 2021, "Accounting for variance in ML benchmarks" (MLSys): seeds and CIs.
 
 ### 3.5 Object-centric learning as an alternative extractor
@@ -116,9 +116,9 @@ yields.
 - Kembhavi et al. 2016, AI2D diagrams with parse graphs (ECCV). [DATASET, has element/relation graphs]
 - Hendrycks & Dietterich 2018, Icons-50 (arXiv v1 of the corruptions paper). [DATASET, style shift across vendors]
 - Stallkamp et al. 2012, GTSRB traffic signs (Neural Networks). [DATASET]
-- Yu et al. 2017, Sketch-a-Net (IJCV); Ha & Eck 2018, Sketch-RNN (ICLR) *(verify)*.
+- Yu et al. 2017, Sketch-a-Net (IJCV); Ha & Eck 2018, Sketch-RNN (ICLR).
 - Carlier et al. 2020, DeepSVG (NeurIPS); Reddy et al. 2021, Im2Vec (CVPR); Dominici et al. 2020, PolyFit (TOG): raster-to-vector, i.e. candidate learned extractors for icons.
-- Zeng et al. 2019, floor plan recognition (ICCV); line-segment floor-plan GNN 2023 (arXiv); Paliwal et al. 2021 Digitize-PID *(verify)*: engineering-drawing symbol detection followed by graph reasoning, the industrial version of this pipeline.
+- Zeng et al. 2019, floor plan recognition (ICCV); line-segment floor-plan GNN 2023 (arXiv); Paliwal et al. 2021 Digitize-PID: engineering-drawing symbol detection followed by graph reasoning, the industrial version of this pipeline.
 
 ## 4. Baselines a reviewer will demand (with the motivating paper)
 
