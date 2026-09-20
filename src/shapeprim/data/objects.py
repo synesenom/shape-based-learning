@@ -47,13 +47,15 @@ CLASS_TEMPLATES: dict[str, ClassTemplate] = {
         [
             PrimitiveSpec("circle", 0.22, 0.75, 0.32, 0.32, name="wheel_rear"),
             PrimitiveSpec("circle", 0.78, 0.75, 0.32, 0.32, name="wheel_front"),
-            # Narrow frame triangle bridging the wheels' inner edges (apex = seat),
-            # instead of a wide triangle overlapping the wheels like ears.
-            PrimitiveSpec("triangle", 0.42, 0.52, 0.28, 0.34, name="frame"),
-            # Fork: diagonal line from the frame apex down to the front wheel hub,
-            # the single feature that reads as "bike" rather than "triangle + circles".
-            PrimitiveSpec("line", 0.6, 0.55, 0.54, 0.035, rotation=0.84, name="fork"),
-            PrimitiveSpec("line", 0.46, 0.29, 0.16, 0.04, rotation=-0.15, name="handlebar"),
+            # Frame triangle, apex pointing down (rotation=PI) like a real bike
+            # frame: the wide base is up top (seat/head tube), the apex is the
+            # bottom bracket, a single low point between the wheels.
+            PrimitiveSpec("triangle", 0.5, 0.45, 0.3, 0.32, rotation=PI, name="frame"),
+            # Chainstay + fork: lines from the bottom-bracket apex down to each
+            # wheel hub -- the feature that reads as "bike" rather than "triangle + circles".
+            PrimitiveSpec("line", 0.36, 0.68, 0.313, 0.03, rotation=2.678, name="chainstay"),
+            PrimitiveSpec("line", 0.64, 0.68, 0.313, 0.03, rotation=0.464, name="fork"),
+            PrimitiveSpec("line", 0.62, 0.26, 0.14, 0.035, rotation=-0.2, name="handlebar"),
         ],
     ),
     "car": ClassTemplate(
