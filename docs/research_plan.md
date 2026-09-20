@@ -132,17 +132,37 @@ and the classical one is class-dependent (bicycle/person fail). Missing:
 ### 2.6 Positioning
 
 PLAN.md §9 lists 11 references and misses the lines of work most likely to
-be raised: relation networks and Sort-of-CLEVR (a GNN/relational module
-over object features vs a CNN), neuro-symbolic pipelines with a perception
-stage feeding a reasoner (NS-VQA, NS-CL) and studies of how perception
-errors propagate, object-centric representation learning and its measured
-effect on OOD generalisation (Dittadi et al. 2022), pictorial structures and
-attributed relational graphs (the 1970s-2000s version of exactly this
-pipeline), sketch-graph recognition (SketchGNN etc.) and Ellis et al. 2018
-who infer primitive programs from drawings. See `docs/literature_review.md`.
-The "generic primitives, not semantic parts" novelty is real but narrow;
-the defensible novelty is the *controlled tradeoff study*, which nobody in
-that list has done.
+be raised (details and corrected citations in `docs/literature_review.md`):
+
+- **Object-centric plus relational models on synthetic shape tasks**
+  (Webb, Sinha & Cohen 2021; Mondal, Webb & Cohen 2023; Webb et al. 2023,
+  OCRA). These already report sample-efficiency and OOD gains of an
+  extract-then-relate pipeline over CNN and transformer pixel models. This
+  is the work a reviewer will cite against H1 and H3 as stated.
+- **Neuro-symbolic VQA** (Yi et al. 2018 NS-VQA; Mao et al. 2019 NS-CL;
+  Amizadeh et al. 2020 on disentangling perception from reasoning) and
+  **relation networks** (Santoro et al. 2017): the same two-stage idea, with
+  the effect of perception errors discussed but never mapped.
+- **Object-centric representation robustness** (Dittadi et al. 2022): the
+  most careful existing study of whether object-centric representations
+  buy OOD generalisation; mixed results, and no explicit relations.
+- **Pictorial structures and attributed relational graphs** (Fischler &
+  Elschlager 1973; Felzenszwalb & Huttenlocher 2005; Bunke & Allermann 1983;
+  Sanfeliu & Fu 1983): the pre-deep-learning version of exactly this
+  pipeline, which the paper must acknowledge as lineage.
+- **Sketch-graph recognition** (SketchGNN; Multi-Graph Transformer;
+  Sketchformer) and **primitive/program inference from drawings** (Ellis et
+  al. 2018; CSGNet): the closest engineering precedents, and the source of
+  the real-data anchor in WP6.
+
+Against that background, the "generic primitives, not semantic parts"
+novelty in PLAN.md is real but narrow: it distinguishes the project from
+CompositionalNets and part-based robustness work, not from slot-based or
+neuro-symbolic pipelines. The defensible novelty is the *controlled
+tradeoff study*: extraction quality as an experimental dial, break-even
+against strong pixel baselines, relation-twin classes with causal
+diagnostics, and an honest annotation budget. None of the works above does
+that.
 
 ### 2.7 Engineering gaps (small, but blocking)
 
@@ -278,6 +298,11 @@ Pixel side:
 - Small ViT (optional, if compute allows).
 - Relation Network (Santoro et al. 2017) over CNN feature-map cells: the
   midpoint that has relations but no explicit primitives.
+- Optional but closest competitor: Slot Attention extractor with the same
+  GNN/set-transformer head (Locatello et al. 2020; Mondal et al. 2023).
+  Learned objects instead of geometric primitives, no primitive labels
+  needed; if it matches the oracle-primitive pipeline, the "generic
+  primitives" claim loses its force and the paper must say so.
 
 Primitive side:
 - GINE GNN (exists).
