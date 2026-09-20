@@ -1,6 +1,6 @@
 # Phase 1 baseline comparison, run under the WP0 protocol
 # (docs/research_plan.md): three splits from disjoint streams, model
-# selection on validation, one test evaluation per run, three seeds,
+# selection on validation, one test evaluation per run, five seeds,
 # augmented and un-augmented CNN both reported.
 #
 # This is the honest replacement for the single-seed run recorded in
@@ -17,7 +17,9 @@ n_test_per_class: 100
 distractor_prob: 0.0
 
 # Protocol.
-seeds: [0, 1, 2]
+# Five seeds, not the three-seed minimum: this table is WP0's headline
+# result, and docs/research_plan.md sets 5 for anything headline.
+seeds: [0, 1, 2, 3, 4]
 # The test split is drawn from this fixed seed in every run, so the spread
 # across seeds reflects training stochasticity and the training draw,
 # rather than a different test set each time.
