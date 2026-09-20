@@ -193,6 +193,63 @@ quantitative guidance for that decision. The folklore says "structure helps
 when data is scarce and hurts when perception is noisy", and nobody has
 measured where the crossover lies.
 
+The sharpest version of that decision, and the one the paper should open
+on, is the **new symbol set**. A notation standard is revised, a client
+uses house conventions, a new schematic family appears, and the team has
+five examples of each symbol and a deadline. This is a genuine few-shot
+regime with real money attached, not a benchmark contrivance. It is also
+exactly the regime where the two approaches are predicted to diverge and
+where nobody can currently say which to choose.
+
+### 3.1b The question behind the question: structure given vs structure learned
+
+The practical decision is an instance of an older one. A recogniser can be
+*handed* a vocabulary of parts, or made to *discover* one from examples.
+This project measures the exchange rate between the two: how good a
+supplied vocabulary has to be, and how scarce the data has to be, before
+being handed the vocabulary wins. The oracle extractor is the limiting
+case of a perfect innate vocabulary; the classical and learned extractors
+are degraded versions of it.
+
+That framing has an obvious biological echo, and the echo is worth stating
+carefully because it is easy to overclaim. What the developmental
+literature does and does not support:
+
+- **Supported: architectural priors and pre-natal structuring.**
+  Orientation-selective cells are present before patterned visual
+  experience, and spontaneous retinal waves structure the visual system
+  before the eyes open (Ackman, Burbridge & Crair 2012, *Nature*) -- an
+  internally generated pre-training signal. Newborns minutes old orient
+  toward a top-heavy three-blob configuration (Goren, Sarty & Wu 1975;
+  Johnson & Morton 1991), which is a configural bias rather than a face
+  detector. Face-selective and number-selective units emerge in *untrained*
+  randomly initialised networks (Baek, Song & Paik 2021, *Nature
+  Communications*; Kim, Jang & Paik 2021, *Science Advances*), showing
+  selectivity can fall out of wiring statistics alone.
+- **Supported: experience then refines it.** Kittens reared seeing only
+  one orientation go behaviourally blind to the other (Blakemore & Cooper
+  1970, *Nature* 228:477). Late-sighted patients recover acuity quickly but
+  struggle with object integration (Project Prakash; Ostrovsky et al.
+  2009, *Psychological Science*).
+- **Not supported: a stored library of shape templates.** No evidence
+  places geons, or any primitive alphabet, in cortex at birth. Biederman
+  (1987) proposed geons as universal, and their innateness remains an open
+  question rather than an established one.
+- **The honest counterweight.** The shape bias in children -- generalising
+  a new word by shape rather than colour or texture -- appears around 24
+  months and tracks vocabulary growth (Landau, Smith & Jones 1988). It
+  looks learned. So "shape matters" is itself acquired, even if the
+  machinery that makes it quickly acquirable is not.
+
+**How this may and may not be used in the paper.** It motivates, and it
+belongs in the introduction and discussion. It is *not* a result: this
+project has no human or animal data and must claim nothing about brains.
+The defensible sentence is that a supplied primitive vocabulary is worth a
+measurable quantity of training data under stated conditions. That is a
+claim about learning systems, and it lets the reader draw the biological
+inference without the paper asserting it. Reviewers punish the overreach
+harder than they reward the framing.
+
 ### 3.2 The question
 
 **Target venue: Nature Machine Intelligence**, with TMLR as the graceful
@@ -443,16 +500,23 @@ stakes; two are the minimum for the claim that the rule travels.
    primitive decomposition is natural, and PLAN.md already lists it
    (Phase 3b). Stroke sequences give a non-oracle, non-synthetic extractor
    (stroke-to-primitive fitting) whose F1 is estimable on a small
-   hand-labelled subset. Ten classes overlap the existing templates.
+   hand-labelled subset. Ten classes overlap the existing templates. Run
+   this first: it is the cheapest possible test of whether the rule
+   travels at all, and it is the bridge to the developmental framing in
+   section 3.1b.
 2. **Icons and logos under style shift (Icons-50, LLD).** Born-digital
    geometry, and the same icon rendered by different vendors is a
    ready-made appearance shift with no rendering tricks. Tests H4 on real
    data.
-3. **Engineering or process diagrams (floor plans, P&ID, circuits).**
-   Highest stakes and the domain the introduction is motivated by. Symbol
-   detection followed by graph reasoning is already the industrial
-   pipeline, so the comparison is the one practitioners actually face.
-   Most expensive: annotation is scarce and licensing varies.
+3. **Engineering or process diagrams (floor plans, P&ID, circuits) -- the
+   headline application.** Highest stakes, and the domain the introduction
+   is motivated by. Meaning lives entirely in the arrangement of a shared
+   symbol vocabulary, and symbol detection followed by graph reasoning is
+   already the industrial pipeline, so the comparison is the one
+   practitioners actually face. This is where the new-symbol-set framing
+   and the annotation-cost accounting land hardest, because someone is
+   paying for those labels. Most expensive: annotation is scarce and
+   licensing varies, so scope it early.
 
 For each domain, in this order, and the order is the method:
 
