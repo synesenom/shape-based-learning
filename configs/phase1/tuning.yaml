@@ -1,0 +1,66 @@
+# Hyperparameter budget, spent equally on both sides (WP0 item 2).
+#
+# The comparison's credibility rests on neither model having been tuned
+# harder than the other, so this file gives each an identical four-trial
+# grid over (optimizer, learning rate, weight decay) and selects on
+# validation accuracy. One seed per trial: this picks hyperparameters, it
+# does not report results. The chosen settings go into configs/model/*.yaml
+# and the headline numbers are then measured with the three-seed protocol.
+#
+# Four trials is a small budget. It is recorded here so that "equal tuning"
+# is a checkable claim rather than an assertion, and so the budget can be
+# raised later for both sides at once.
+phase: phase1
+experiment: tuning
+
+image_size: 64
+n_train_per_class: 150
+n_val_per_class: 40
+# Small: tuning must never look at test. It is carried only because the
+# driver always evaluates it once, and these numbers are not reported.
+n_test_per_class: 20
+distractor_prob: 0.0
+
+seeds: [0]
+test_seed: 12345
+epochs: 20
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 50
+
+models:
+  - name: cnn_adam_lr1e-3
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: adam, lr: 0.001, weight_decay: 0.0001}
+  - name: cnn_adam_lr3e-4
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: adam, lr: 0.0003, weight_decay: 0.0001}
+  - name: cnn_sgd_lr5e-2
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: sgd, lr: 0.05, weight_decay: 0.0005}
+  - name: cnn_adamw_lr1e-3
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: adamw, lr: 0.001, weight_decay: 0.01}
+
+  - name: gnn_adam_lr1e-3
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: adam, lr: 0.001, weight_decay: 0.0001}
+  - name: gnn_adam_lr3e-3
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: adam, lr: 0.003, weight_decay: 0.0001}
+  - name: gnn_sgd_lr5e-2
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: sgd, lr: 0.05, weight_decay: 0.0005}
+  - name: gnn_adamw_lr1e-3
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: adamw, lr: 0.001, weight_decay: 0.01}
