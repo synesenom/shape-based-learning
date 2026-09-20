@@ -19,6 +19,15 @@ PRIMITIVE_TYPES = ("circle", "triangle", "rectangle", "line")
 
 Color = Tuple[int, int, int]
 
+# Every primitive is stroked with this outline on top of its fill. Without
+# it, a part fully contained in another same-colored part (e.g. a car's
+# window inside its body) would leave no pixel evidence at all -- the fill
+# is identical to what's underneath, so there is no edge for a classical
+# contour-based extractor to find. The outline is a fixed rendering
+# convention, not semantic data, so it isn't a dataclass field.
+OUTLINE_COLOR: Color = (255, 255, 255)
+OUTLINE_WIDTH = 2
+
 
 @dataclass
 class Primitive:
@@ -68,7 +77,17 @@ class Primitive:
             return None
         return [_rotate_translate(x, y, self.cx, self.cy, self.rotation) for x, y in local]
 
+    def _outline_width(self) -> int:
+        # A fixed-width outline drawn on a thin shape (e.g. a 2px-thick line)
+        # can fully overwrite the fill, leaving no fill pixel at all -- and
+        # since the outline is white, the shape would vanish into the white
+        # background. Cap the outline so at least ~half the thinnest
+        # dimension stays fill-colored.
+        thinnest = min(self.width, self.height)
+        return max(1, min(OUTLINE_WIDTH, int(thinnest // 4)))
+
     def draw(self, draw: ImageDraw.ImageDraw) -> None:
+        outline_width = self._outline_width()
         if self.type == "circle":
             bbox = (
                 self.cx - self.width / 2,
@@ -76,9 +95,9 @@ class Primitive:
                 self.cx + self.width / 2,
                 self.cy + self.height / 2,
             )
-            draw.ellipse(bbox, fill=self.color)
+            draw.ellipse(bbox, fill=self.color, outline=OUTLINE_COLOR, width=outline_width)
         else:
-            draw.polygon(self.polygon(), fill=self.color)
+            draw.polygon(self.polygon(), fill=self.color, outline=OUTLINE_COLOR, width=outline_width)
 
     def to_dict(self) -> dict:
         return {

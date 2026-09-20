@@ -119,20 +119,26 @@ def render_sample(
             )
         )
 
+    # Template parts must draw in template order (container before contained
+    # detail, e.g. a car body before its windows) so a part fully inside
+    # another isn't erased. Only distractors -- which never contain or are
+    # contained by the object -- get a random front/behind placement.
+    behind: List[Primitive] = []
+    front: List[Primitive] = []
     if cfg.distractor_prob > 0 and rng.random() < cfg.distractor_prob:
         n_distractors = rng.randint(1, max(1, cfg.max_distractors))
         for _ in range(n_distractors):
-            primitives.append(_random_distractor(size, rng, cfg))
+            d = _random_distractor(size, rng, cfg)
+            (front if rng.random() < 0.5 else behind).append(d)
 
-    order = list(range(len(primitives)))
-    rng.shuffle(order)
+    draw_order = behind + primitives + front
 
     image = Image.new("RGB", (size, size), cfg.background)
     draw = ImageDraw.Draw(image)
-    for i in order:
-        primitives[i].draw(draw)
+    for p in draw_order:
+        p.draw(draw)
 
-    return Sample(image=image, primitives=primitives, label=class_name)
+    return Sample(image=image, primitives=draw_order, label=class_name)
 
 
 def _random_distractor(size: int, rng: random.Random, cfg: GenerationConfig) -> Primitive:

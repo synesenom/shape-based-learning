@@ -26,17 +26,28 @@ def test_render_sample_background_corner_is_background_color():
 
 @pytest.mark.parametrize("class_name", CLASS_NAMES)
 def test_ground_truth_primitives_match_rendered_pixels(class_name):
-    """Every non-distractor primitive's center pixel must carry its fill color:
-    this is the core check that the JSON ground truth matches the image."""
+    """Every primitive's fill color must appear near its own center: the
+    core check that the JSON ground truth matches the image. A small
+    neighborhood (not the single rounded-center pixel) is checked because a
+    thin rotated primitive's exact geometric center can rasterize onto its
+    outline stroke by a fraction of a pixel."""
     cfg = GenerationConfig(image_size=128, distractor_prob=0.0)
+    radius = 2
     for trial in range(5):
         sample = render_sample(class_name, random.Random(trial), cfg)
         for p in sample.primitives:
-            x, y = int(round(p.cx)), int(round(p.cy))
-            x = min(max(x, 0), cfg.image_size - 1)
-            y = min(max(y, 0), cfg.image_size - 1)
-            pixel = sample.image.getpixel((x, y))
-            assert pixel == tuple(p.color), (class_name, p.type, x, y)
+            cx, cy = int(round(p.cx)), int(round(p.cy))
+            found = False
+            for dy in range(-radius, radius + 1):
+                for dx in range(-radius, radius + 1):
+                    x = min(max(cx + dx, 0), cfg.image_size - 1)
+                    y = min(max(cy + dy, 0), cfg.image_size - 1)
+                    if sample.image.getpixel((x, y)) == tuple(p.color):
+                        found = True
+                        break
+                if found:
+                    break
+            assert found, (class_name, p.type, cx, cy)
 
 
 def test_num_primitives_matches_template_when_no_distractors():
