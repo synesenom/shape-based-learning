@@ -12,6 +12,8 @@ dependencies = [
     "pillow",
     "pyyaml",
     "opencv-python-headless",
+    "torch",
+    "torchvision",
 ]
 
 [project.optional-dependencies]

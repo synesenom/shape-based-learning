@@ -1,0 +1,6 @@
+# Primitive-graph classifier (PLAN.md section 4): message-passing GNN with edge features.
+hidden_dim: 64
+num_layers: 3
+dropout: 0.1
+lr: 0.001
+weight_decay: 0.0001

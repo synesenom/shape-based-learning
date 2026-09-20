@@ -1,0 +1,12 @@
+# Quick end-to-end pipeline check (PLAN.md section 10: small run first,
+# fewer classes/smaller images, before scaling up). Compares the CNN
+# baseline against the GNN classifier fed by the oracle and classical
+# extractors.
+image_size: 64
+n_train_per_class: 150
+n_test_per_class: 40
+epochs: 15
+batch_size: 32
+seed: 0
+distractor_prob: 0.0
+num_workers: 0

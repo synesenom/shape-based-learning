@@ -1,0 +1,4 @@
+# CNN baseline (PLAN.md section 4): ResNet-18, from scratch, adapted stem for small images.
+pretrained: false
+lr: 0.001
+weight_decay: 0.0001
