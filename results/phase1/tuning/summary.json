@@ -1,0 +1,668 @@
+{
+  "config": {
+    "phase": "phase1",
+    "experiment": "tuning",
+    "image_size": 64,
+    "n_train_per_class": 150,
+    "n_val_per_class": 40,
+    "n_test_per_class": 20,
+    "distractor_prob": 0.0,
+    "seeds": [
+      0
+    ],
+    "test_seed": 12345,
+    "epochs": 20,
+    "batch_size": 32,
+    "num_workers": 0,
+    "device": "auto",
+    "cache_dir": "data/cache",
+    "extractor_eval_samples": 50,
+    "models": [
+      {
+        "name": "cnn_adam_lr1e-3",
+        "kind": "cnn",
+        "augment": "none",
+        "model_overrides": {
+          "optimizer": "adam",
+          "lr": 0.001,
+          "weight_decay": 0.0001
+        }
+      },
+      {
+        "name": "cnn_adam_lr3e-4",
+        "kind": "cnn",
+        "augment": "none",
+        "model_overrides": {
+          "optimizer": "adam",
+          "lr": 0.0003,
+          "weight_decay": 0.0001
+        }
+      },
+      {
+        "name": "cnn_sgd_lr5e-2",
+        "kind": "cnn",
+        "augment": "none",
+        "model_overrides": {
+          "optimizer": "sgd",
+          "lr": 0.05,
+          "weight_decay": 0.0005
+        }
+      },
+      {
+        "name": "cnn_adamw_lr1e-3",
+        "kind": "cnn",
+        "augment": "none",
+        "model_overrides": {
+          "optimizer": "adamw",
+          "lr": 0.001,
+          "weight_decay": 0.01
+        }
+      },
+      {
+        "name": "gnn_adam_lr1e-3",
+        "kind": "gnn",
+        "extractor": "oracle",
+        "model_overrides": {
+          "optimizer": "adam",
+          "lr": 0.001,
+          "weight_decay": 0.0001
+        }
+      },
+      {
+        "name": "gnn_adam_lr3e-3",
+        "kind": "gnn",
+        "extractor": "oracle",
+        "model_overrides": {
+          "optimizer": "adam",
+          "lr": 0.003,
+          "weight_decay": 0.0001
+        }
+      },
+      {
+        "name": "gnn_sgd_lr5e-2",
+        "kind": "gnn",
+        "extractor": "oracle",
+        "model_overrides": {
+          "optimizer": "sgd",
+          "lr": 0.05,
+          "weight_decay": 0.0005
+        }
+      },
+      {
+        "name": "gnn_adamw_lr1e-3",
+        "kind": "gnn",
+        "extractor": "oracle",
+        "model_overrides": {
+          "optimizer": "adamw",
+          "lr": 0.001,
+          "weight_decay": 0.01
+        }
+      }
+    ]
+  },
+  "classes": [
+    "bicycle",
+    "car",
+    "truck",
+    "cat_face",
+    "house",
+    "tree",
+    "arrow_sign",
+    "snowman",
+    "person",
+    "fish"
+  ],
+  "seeds": [
+    0
+  ],
+  "conditions": {
+    "150": {
+      "cnn_adam_lr1e-3": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 571.1693642139435,
+          "std": null,
+          "ci95": null,
+          "min": 571.1693642139435,
+          "max": 571.1693642139435,
+          "values": [
+            571.1693642139435
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 12.0,
+          "std": null,
+          "ci95": null,
+          "min": 12.0,
+          "max": 12.0,
+          "values": [
+            12.0
+          ]
+        }
+      },
+      "cnn_adam_lr3e-4": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 0.995,
+          "std": null,
+          "ci95": null,
+          "min": 0.995,
+          "max": 0.995,
+          "values": [
+            0.995
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 509.6148052215576,
+          "std": null,
+          "ci95": null,
+          "min": 509.6148052215576,
+          "max": 509.6148052215576,
+          "values": [
+            509.6148052215576
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 11.0,
+          "std": null,
+          "ci95": null,
+          "min": 11.0,
+          "max": 11.0,
+          "values": [
+            11.0
+          ]
+        }
+      },
+      "cnn_sgd_lr5e-2": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 590.20680975914,
+          "std": null,
+          "ci95": null,
+          "min": 590.20680975914,
+          "max": 590.20680975914,
+          "values": [
+            590.20680975914
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 13.0,
+          "std": null,
+          "ci95": null,
+          "min": 13.0,
+          "max": 13.0,
+          "values": [
+            13.0
+          ]
+        }
+      },
+      "cnn_adamw_lr1e-3": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 455.8239326477051,
+          "std": null,
+          "ci95": null,
+          "min": 455.8239326477051,
+          "max": 455.8239326477051,
+          "values": [
+            455.8239326477051
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 10.0,
+          "std": null,
+          "ci95": null,
+          "min": 10.0,
+          "max": 10.0,
+          "values": [
+            10.0
+          ]
+        }
+      },
+      "gnn_adam_lr1e-3": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 7.0132737159729,
+          "std": null,
+          "ci95": null,
+          "min": 7.0132737159729,
+          "max": 7.0132737159729,
+          "values": [
+            7.0132737159729
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 12.0,
+          "std": null,
+          "ci95": null,
+          "min": 12.0,
+          "max": 12.0,
+          "values": [
+            12.0
+          ]
+        },
+        "extractor_f1": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        }
+      },
+      "gnn_adam_lr3e-3": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 5.9425060749053955,
+          "std": null,
+          "ci95": null,
+          "min": 5.9425060749053955,
+          "max": 5.9425060749053955,
+          "values": [
+            5.9425060749053955
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 10.0,
+          "std": null,
+          "ci95": null,
+          "min": 10.0,
+          "max": 10.0,
+          "values": [
+            10.0
+          ]
+        },
+        "extractor_f1": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        }
+      },
+      "gnn_sgd_lr5e-2": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 6.222770690917969,
+          "std": null,
+          "ci95": null,
+          "min": 6.222770690917969,
+          "max": 6.222770690917969,
+          "values": [
+            6.222770690917969
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 11.0,
+          "std": null,
+          "ci95": null,
+          "min": 11.0,
+          "max": 11.0,
+          "values": [
+            11.0
+          ]
+        },
+        "extractor_f1": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        }
+      },
+      "gnn_adamw_lr1e-3": {
+        "n_runs": 1,
+        "seeds": [
+          0
+        ],
+        "test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "best_val_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "twin_test_acc": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        },
+        "train_seconds": {
+          "n": 1,
+          "mean": 6.460953712463379,
+          "std": null,
+          "ci95": null,
+          "min": 6.460953712463379,
+          "max": 6.460953712463379,
+          "values": [
+            6.460953712463379
+          ]
+        },
+        "epochs_run": {
+          "n": 1,
+          "mean": 11.0,
+          "std": null,
+          "ci95": null,
+          "min": 11.0,
+          "max": 11.0,
+          "values": [
+            11.0
+          ]
+        },
+        "extractor_f1": {
+          "n": 1,
+          "mean": 1.0,
+          "std": null,
+          "ci95": null,
+          "min": 1.0,
+          "max": 1.0,
+          "values": [
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  "n_parameters": {
+    "cnn_adam_lr1e-3": 11173962,
+    "cnn_adam_lr3e-4": 11173962,
+    "cnn_sgd_lr5e-2": 11173962,
+    "cnn_adamw_lr1e-3": 11173962,
+    "gnn_adam_lr1e-3": 57549,
+    "gnn_adam_lr3e-3": 57549,
+    "gnn_sgd_lr5e-2": 57549,
+    "gnn_adamw_lr1e-3": 57549
+  },
+  "condition": {
+    "name": "tuning",
+    "is_shift": false
+  }
+}

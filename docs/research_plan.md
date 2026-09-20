@@ -1,5 +1,8 @@
 # Research plan: from "shape-primitive recognition works" to a publishable paper
 
+**Target venue: Nature Machine Intelligence** (section 7), with TMLR as the
+graceful landing if a gate in section 5 fails.
+
 Status of this document: a plan, not a result. It was written after reading
 PLAN.md, the code under `src/shapeprim`, `docs/phase1_evaluation_next_steps.md`
 and `results/phase1/cnn_vs_gnn.json`, and after a literature sweep
@@ -190,18 +193,100 @@ quantitative guidance for that decision. The folklore says "structure helps
 when data is scarce and hurts when perception is noisy", and nobody has
 measured where the crossover lies.
 
+The sharpest version of that decision, and the one the paper should open
+on, is the **new symbol set**. A notation standard is revised, a client
+uses house conventions, a new schematic family appears, and the team has
+five examples of each symbol and a deadline. This is a genuine few-shot
+regime with real money attached, not a benchmark contrivance. It is also
+exactly the regime where the two approaches are predicted to diverge and
+where nobody can currently say which to choose.
+
+### 3.1b The question behind the question: structure given vs structure learned
+
+The practical decision is an instance of an older one. A recogniser can be
+*handed* a vocabulary of parts, or made to *discover* one from examples.
+This project measures the exchange rate between the two: how good a
+supplied vocabulary has to be, and how scarce the data has to be, before
+being handed the vocabulary wins. The oracle extractor is the limiting
+case of a perfect innate vocabulary; the classical and learned extractors
+are degraded versions of it.
+
+That framing has an obvious biological echo, and the echo is worth stating
+carefully because it is easy to overclaim. What the developmental
+literature does and does not support:
+
+- **Supported: architectural priors and pre-natal structuring.**
+  Orientation-selective cells are present before patterned visual
+  experience, and spontaneous retinal waves structure the visual system
+  before the eyes open (Ackman, Burbridge & Crair 2012, *Nature*) -- an
+  internally generated pre-training signal. Newborns minutes old orient
+  toward a top-heavy three-blob configuration (Goren, Sarty & Wu 1975;
+  Johnson & Morton 1991), which is a configural bias rather than a face
+  detector. Face-selective and number-selective units emerge in *untrained*
+  randomly initialised networks (Baek, Song & Paik 2021, *Nature
+  Communications*; Kim, Jang & Paik 2021, *Science Advances*), showing
+  selectivity can fall out of wiring statistics alone.
+- **Supported: experience then refines it.** Kittens reared seeing only
+  one orientation go behaviourally blind to the other (Blakemore & Cooper
+  1970, *Nature* 228:477). Late-sighted patients recover acuity quickly but
+  struggle with object integration (Project Prakash; Ostrovsky et al.
+  2009, *Psychological Science*).
+- **Not supported: a stored library of shape templates.** No evidence
+  places geons, or any primitive alphabet, in cortex at birth. Biederman
+  (1987) proposed geons as universal, and their innateness remains an open
+  question rather than an established one.
+- **The honest counterweight.** The shape bias in children -- generalising
+  a new word by shape rather than colour or texture -- appears around 24
+  months and tracks vocabulary growth (Landau, Smith & Jones 1988). It
+  looks learned. So "shape matters" is itself acquired, even if the
+  machinery that makes it quickly acquirable is not.
+
+**How this may and may not be used in the paper.** It motivates, and it
+belongs in the introduction and discussion. It is *not* a result: this
+project has no human or animal data and must claim nothing about brains.
+The defensible sentence is that a supplied primitive vocabulary is worth a
+measurable quantity of training data under stated conditions. That is a
+claim about learning systems, and it lets the reader draw the biological
+inference without the paper asserting it. Reviewers punish the overreach
+harder than they reward the framing.
+
 ### 3.2 The question
 
-> **For objects defined by the spatial arrangement of a small, shared
-> vocabulary of geometric primitives, under what combination of (a)
-> labelled examples per class, (b) primitive-extraction error, and (c)
-> train-test shift does an explicit primitive-graph recogniser outperform an
-> end-to-end image classifier, and where is the break-even?**
+**Target venue: Nature Machine Intelligence**, with TMLR as the graceful
+landing (section 7). That target sets the shape of the claim. A measured
+tradeoff surface is a good TMLR paper; it is not an NMI paper. What raises
+it is a *predictive* claim: a rule derived under controlled conditions
+that correctly forecasts an outcome in a domain it was not fitted on.
 
-The deliverable is a **break-even map**: on axes of examples-per-class and
-extractor F1, for each shift condition, the contour where the structured
-pipeline and the best pixel baseline tie, plus the mechanism behind its
-shape. This converts the four PLAN.md hypotheses from four "we win" claims
+> **For objects defined by the spatial arrangement of a small, shared
+> vocabulary of geometric primitives, can the point at which an explicit
+> primitive-graph recogniser overtakes an end-to-end image classifier be
+> predicted in advance, from two quantities a practitioner can measure
+> before training either model: the number of labelled examples per class
+> and the quality of the primitive extractor?**
+
+The study has three parts, and the third is what distinguishes it:
+
+1. **Measure.** On synthetic data where extraction quality is a controlled
+   dial, map the break-even surface over (examples per class) x (extractor
+   F1) x (shift condition).
+2. **Compress.** Fit a compact description of the crossover -- the
+   smallest expression in those two measurable quantities that locates it
+   within its confidence interval. A rule travels; a table does not.
+3. **Predict, then test.** For a real domain, measure *only* the extractor
+   F1 and the available dataset size. Register the predicted winner and
+   the predicted margin. Then train both models and report whether the
+   prediction held. The registration happens before the downstream
+   training runs, and the registered file is committed with a timestamp.
+
+Part 3 is the paper's backbone. Reporting a synthetic surface and some
+real numbers side by side is a benchmark study. Forecasting the real
+outcome from the synthetic law, and being right, is a result about how
+structured and end-to-end recognition trade off in general. If the
+forecast fails, that is reportable too, and it tells you the surface is
+not governed by those two quantities alone, which is itself informative.
+
+This converts the four PLAN.md hypotheses from four "we win" claims
 into the axes of one falsifiable surface:
 
 | PLAN.md hypothesis | Becomes |
@@ -234,6 +319,12 @@ Stating these in advance is what makes the study a test rather than a demo.
   class-agnostic extractor is easier to make style-robust than a
   class-specific classifier. Prediction: yes, because the extractor's
   training signal is shared across all classes.
+- **P6 (the out-of-domain forecast).** The crossover fitted on synthetic
+  data predicts the winner on each real domain, and the predicted margin
+  falls inside the measured confidence interval. *Falsified if* the
+  predicted winner is wrong on any domain, or the margin is outside its
+  interval on most. This prediction is registered per domain, in a
+  committed file, before the downstream models are trained.
 
 ---
 
@@ -375,49 +466,113 @@ rotation experiments; drop the `inside` flag.
 - **E6 Cost accounting.** For every cell: parameters, train wall-clock,
   inference wall-clock, class labels used, primitive labels used.
 
-### WP5. Analysis and writing (2-3 weeks)
+### WP5. The crossover rule (1-2 weeks, after E4)
+
+Turn the measured surface into something that can be carried to a new
+domain. This is the step that separates the NMI version from the TMLR
+version, and it must be done *before* any real-domain model is trained.
+
+1. **Fit.** Find the smallest expression in (examples per class, extractor
+   F1) that locates the crossover inside its seed-derived confidence
+   interval across the shift conditions. Candidates in increasing
+   complexity: a constant F1 threshold; a threshold linear in log n; a
+   two-term form with a shift-condition offset. Prefer the simplest that
+   fits, and report the residuals of the ones rejected.
+2. **Cross-validate within the synthetic world first.** Fit on Family A
+   (the 10 hand-designed classes), predict Family B (the procedural
+   grammar), and vice versa. A rule that cannot cross that much smaller
+   gap will not cross a real one, and this check is cheap.
+3. **State the rule's domain of validity** explicitly: primitive
+   vocabulary size, parts per object, class count, what "extractor F1"
+   was measured against. A rule quoted outside its range is worse than no
+   rule.
+4. **Write the registration protocol** used in WP6: what is measured on a
+   new domain, how the prediction is computed, what counts as a hit.
+
+### WP6. Real-domain validation (4-6 weeks) -- CORE, not optional
+
+The single largest lever on the venue. One real domain checked against a
+registered prediction is worth more than any amount of additional
+synthetic conditions. Three domains, in ascending order of cost and of
+stakes; two are the minimum for the claim that the rule travels.
+
+1. **Hand-drawn sketches (Quick, Draw!).** Cheapest real data where
+   primitive decomposition is natural, and PLAN.md already lists it
+   (Phase 3b). Stroke sequences give a non-oracle, non-synthetic extractor
+   (stroke-to-primitive fitting) whose F1 is estimable on a small
+   hand-labelled subset. Ten classes overlap the existing templates. Run
+   this first: it is the cheapest possible test of whether the rule
+   travels at all, and it is the bridge to the developmental framing in
+   section 3.1b.
+2. **Icons and logos under style shift (Icons-50, LLD).** Born-digital
+   geometry, and the same icon rendered by different vendors is a
+   ready-made appearance shift with no rendering tricks. Tests H4 on real
+   data.
+3. **Engineering or process diagrams (floor plans, P&ID, circuits) -- the
+   headline application.** Highest stakes, and the domain the introduction
+   is motivated by. Meaning lives entirely in the arrangement of a shared
+   symbol vocabulary, and symbol detection followed by graph reasoning is
+   already the industrial pipeline, so the comparison is the one
+   practitioners actually face. This is where the new-symbol-set framing
+   and the annotation-cost accounting land hardest, because someone is
+   paying for those labels. Most expensive: annotation is scarce and
+   licensing varies, so scope it early.
+
+For each domain, in this order, and the order is the method:
+
+- Measure the extractor's F1 on a hand-labelled subset, and the available
+  examples per class. Nothing else.
+- Compute and **register** the predicted winner and margin from the WP5
+  rule. Commit the registration file; its timestamp is the evidence.
+- Only then train the pixel and graph models and report the outcome
+  against the registration.
+
+Also required here, and cheap: the **annotation-cost accounting** that
+makes the result actionable. Primitive labels needed to reach a given
+extractor F1, against class labels needed for the pixel model to match.
+That converts the rule from a curiosity into a budgeting tool.
+
+### WP7. Analysis and writing (3-4 weeks)
 
 - Failure atlas: where extraction breaks (thin parts, touching parts,
   occlusion) and what it does downstream; what the CNN confuses under shift.
 - The relocation argument for H4: show accuracy-vs-shift for the extractor
   alone next to the classifier alone.
-- Limitations section written first: synthetic; primitives chosen to match
-  the generator; annotation cost of the learned extractor; rotation
-  symmetry; scope of "objects defined by arrangement".
-- Target venues: TMLR (welcomes careful tradeoff studies and nuanced
-  outcomes), NeurIPS Datasets & Benchmarks (if Family B is released as a
-  benchmark), or a CogSci / CCN paper if the framing leans on
-  recognition-by-components.
-
-### WP6 (optional, recommended). A real-data anchor without photographs
-
-Hand-drawn sketches are the cheapest real data in which primitive
-decomposition is natural, and PLAN.md already lists them (Phase 3b).
-Quick, Draw! ships stroke sequences, so a stroke-to-primitive fitter gives a
-non-oracle, non-synthetic extractor whose F1 can be estimated on a small
-hand-labelled subset. Experiments: synthetic-to-sketch transfer, few-shot on
-sketches, and placing the sketch extractor on the E4 map. Even a small
-version of this turns "synthetic study" into "synthetic study whose
-break-even prediction was checked once on real drawings".
+- The figure the paper is remembered by: the crossover surface with the
+  real domains plotted as points, each showing predicted against measured.
+- Limitations written first: synthetic origin of the rule; primitives
+  chosen to match the generator; annotation cost of the learned extractor;
+  rotation symmetry; scope of "objects defined by arrangement"; and the
+  domains where the rule is *not* claimed to hold (natural photographs).
 
 ---
 
 ## 5. Order of work and milestones
 
-1. WP0 -> re-run the existing comparison with val split, augmentation, 3
-   seeds. *Milestone: an honest Phase 1 table.* Expect the position/scale gap
-   to shrink or vanish for the augmented CNN; that is the first real finding.
+1. WP0 -> re-run the comparison with val split, augmentation, 5 seeds.
+   *Milestone: an honest Phase 1 table.* Done; see
+   `docs/experiment_protocol.md`. Expect the position/scale gap to shrink
+   or vanish for the augmented CNN.
 2. WP3.1-3.2 (noisy oracle + calibration) -> E4 on the existing 10 classes.
-   *Milestone: a first break-even curve.* This is the earliest point at which
-   the paper's core figure exists; if the curve is uninteresting (break-even
-   only at F1 > 0.95) the plan needs revisiting before investing in WP1.
+   *Milestone: a first break-even curve.* Earliest point at which the
+   paper's core figure exists. **Gate:** if break-even only occurs above
+   F1 0.95, the NMI framing is not available and the project should
+   re-target before investing in WP1 and WP6.
 3. WP1 (grammar, twins, dials) and WP2 (baselines) in parallel.
 4. WP3.3 learned extractor, then E1-E3, E5, E6 on Family A + B.
-5. WP5 writing, WP6 if time allows.
+5. WP5 rule fitting. **Gate:** if no simple form fits, or the Family A ->
+   Family B cross-prediction fails, the predictive claim is unavailable
+   and the paper becomes the TMLR tradeoff study.
+6. WP6 real domains, registrations first. *Milestone: the first
+   out-of-domain forecast, hit or miss.*
+7. WP7 writing.
+
+The two gates exist so that the expensive half (WP1, WP6) is only paid for
+once the cheap half has shown the claim is reachable.
 
 ## 6. What would make this not worth publishing
 
-Writing this down so the decision at milestone 2 is explicit:
+Writing this down so the decisions at the gates are explicit:
 
 - Break-even requires F1 > 0.95 under every condition: then structure only
   pays with an oracle, and the paper becomes a negative result (still
@@ -428,3 +583,39 @@ Writing this down so the decision at milestone 2 is explicit:
 - The noisy-oracle calibration fails (noise at matched F1 does not reproduce
   the classical extractor's downstream accuracy): then the F1 axis is not a
   sufficient statistic and the map has to be drawn per error *type*.
+- No simple form fits the crossover, or the Family A -> Family B
+  cross-prediction misses: the predictive claim is gone and only the
+  tradeoff study remains.
+
+## 7. Venue strategy and the graceful landing
+
+**Target: Nature Machine Intelligence.** What that venue needs, beyond
+rigour, is a result that changes what practitioners do and that is shown
+to hold beyond the setting it was derived in. Three things carry it:
+
+1. a rule, not a table, for when structure pays;
+2. registered out-of-domain forecasts on at least two real domains;
+3. annotation-cost accounting that makes the rule a budgeting tool.
+
+The nearest published comparator is Madan et al. 2022 in the same venue,
+on CNN generalisation to out-of-distribution category-viewpoint
+combinations. That is a controlled study with a general claim and no
+real-world deployment, which is the right calibration for what is
+achievable here.
+
+**The landing, if a gate fails.** Each fallback is a real paper, so no
+outcome wastes the work:
+
+| If | Then |
+|---|---|
+| The rule fits and the forecasts hit | NMI submission as planned |
+| The rule fits, forecasts miss on some domains | NMI is a stretch; the honest version (what the rule fails to capture) is a strong TMLR paper |
+| No simple rule, but the surface is well measured | TMLR tradeoff study, the original plan |
+| Family B is the most reusable artefact | NeurIPS Datasets and Benchmarks, in addition |
+| The whole advantage is an augmentation artefact | A short, useful negative-result paper, and worth writing |
+
+**What the target does not change.** Nothing about the protocol, the
+baselines, or the honesty of the reporting is adjusted to suit a venue.
+The framing follows the result. Aiming higher changes what is *built*
+(the rule, the real domains, the registrations), never what is *claimed*
+about what was measured.
