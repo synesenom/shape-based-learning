@@ -1,12 +1,49 @@
-# Quick end-to-end pipeline check (PLAN.md section 10: small run first,
-# fewer classes/smaller images, before scaling up). Compares the CNN
-# baseline against the GNN classifier fed by the oracle and classical
-# extractors.
+# Phase 1 baseline comparison, run under the WP0 protocol
+# (docs/research_plan.md): three splits from disjoint streams, model
+# selection on validation, one test evaluation per run, three seeds,
+# augmented and un-augmented CNN both reported.
+#
+# This is the honest replacement for the single-seed run recorded in
+# results/phase1/cnn_vs_gnn.json, whose "test accuracy" was the last
+# epoch of a curve that was itself monitored on the test set.
+phase: phase1
+experiment: baseline
+
+# Data. Kept at 64px per PLAN.md section 10 ("quick small runs first").
 image_size: 64
 n_train_per_class: 150
-n_test_per_class: 40
-epochs: 15
-batch_size: 32
-seed: 0
+n_val_per_class: 40
+n_test_per_class: 100
 distractor_prob: 0.0
+
+# Protocol.
+seeds: [0, 1, 2]
+# The test split is drawn from this fixed seed in every run, so the spread
+# across seeds reflects training stochasticity and the training draw,
+# rather than a different test set each time.
+test_seed: 12345
+epochs: 30
+batch_size: 32
 num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 200
+
+models:
+  # The pixel baseline as it stands today: no augmentation.
+  - name: cnn
+    kind: cnn
+    augment: none
+  # The same network with random-affine augmentation covering the
+  # generator's own position and scale variation. The primitive graph is
+  # translation/scale-invariant by construction, so this is the baseline
+  # that makes an invariance claim mean something.
+  - name: cnn_aug
+    kind: cnn
+    augment: standard
+  - name: gnn_oracle
+    kind: gnn
+    extractor: oracle
+  - name: gnn_classical
+    kind: gnn
+    extractor: classical

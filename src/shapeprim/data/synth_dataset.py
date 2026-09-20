@@ -156,8 +156,17 @@ def _random_distractor(size: int, rng: random.Random, cfg: GenerationConfig) -> 
 class SynthShapeDataset(Sequence):
     """In-memory / render-on-the-fly dataset of (image, primitives, label).
 
-    Deterministic given (classes, n_per_class, seed): index ``i`` always
-    renders the same sample. Does not require torch.
+    Deterministic given (classes, n_per_class, seed, split): index ``i``
+    always renders the same sample. Does not require torch.
+
+    ``split`` participates in the per-sample seed derivation, so
+    ``split="train"``, ``"val"`` and ``"test"`` built from the *same* base
+    seed draw from disjoint random streams. That is what lets an experiment
+    name one seed and get three non-overlapping splits, instead of the
+    error-prone ``seed``/``seed + 1`` convention (which silently makes the
+    test set of seed 0 the training set of seed 1). Leaving ``split`` empty
+    reproduces the pre-split seed derivation exactly, so data generated
+    before this parameter existed is unchanged.
     """
 
     def __init__(
@@ -166,11 +175,13 @@ class SynthShapeDataset(Sequence):
         n_per_class: int = 100,
         cfg: Optional[GenerationConfig] = None,
         seed: int = 0,
+        split: str = "",
     ):
         self.classes = list(classes)
         self.n_per_class = n_per_class
         self.cfg = cfg or GenerationConfig()
         self.seed = seed
+        self.split = split
 
     def __len__(self) -> int:
         return len(self.classes) * self.n_per_class
@@ -182,7 +193,10 @@ class SynthShapeDataset(Sequence):
             raise IndexError(index)
         class_idx, within = divmod(index, self.n_per_class)
         class_name = self.classes[class_idx]
-        sample_seed = _stable_seed(self.seed, class_name, within)
+        if self.split:
+            sample_seed = _stable_seed(self.seed, self.split, class_name, within)
+        else:
+            sample_seed = _stable_seed(self.seed, class_name, within)
         return class_name, sample_seed
 
     def __getitem__(self, index: int) -> Sample:

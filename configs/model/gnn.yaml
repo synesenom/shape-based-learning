@@ -1,6 +1,19 @@
-# Primitive-graph classifier (PLAN.md section 4): message-passing GNN with edge features.
+# Primitive-graph classifier (PLAN.md section 4): message-passing GNN with
+# edge features.
+#
+# Same schedule/stopping policy as the CNN, and deliberately so: an
+# advantage that comes from one model getting a tuned schedule and the
+# other not is a training-protocol artifact, and this comparison exists to
+# rule exactly that out. Any per-model tuning budget spent later has to be
+# spent on both sides and documented (docs/research_plan.md, WP0).
 hidden_dim: 64
 num_layers: 3
 dropout: 0.1
 lr: 0.001
 weight_decay: 0.0001
+optimizer: adam
+schedule: cosine
+warmup_epochs: 2
+min_lr_fraction: 0.01
+early_stopping_patience: 8
+grad_clip: 5.0

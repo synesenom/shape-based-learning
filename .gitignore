@@ -9,6 +9,11 @@ results/**/*.png
 results/**/*.json
 !results/phase1/sample_grid.png
 !results/phase1/cnn_vs_gnn.json
+# Keep each experiment's headline artifacts (summary + figure); the
+# per-run directories underneath stay local -- they hold a full
+# training history per run and regenerate from the config.
+!results/*/*/summary.json
+!results/*/*/*.png
 !results/.gitkeep
 *.pt
 *.pth

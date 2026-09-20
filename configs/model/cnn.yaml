@@ -1,4 +1,19 @@
-# CNN baseline (PLAN.md section 4): ResNet-18, from scratch, adapted stem for small images.
+# CNN baseline (PLAN.md section 4): ResNet-18, from scratch, adapted stem
+# for small images.
+#
+# The schedule and warm-up are not decoration. The first comparison run
+# (results/phase1/cnn_vs_gnn.json) used a bare Adam at 1e-3 with no
+# schedule, and its test accuracy collapsed to 0.18 at epoch 1 and 0.61 at
+# epoch 11 before recovering. Reporting a last-epoch number from a curve
+# that unstable measures training luck, not the model. Cosine decay with a
+# short warm-up removes the collapses; early stopping on validation makes
+# the run length adaptive instead of a guess.
 pretrained: false
 lr: 0.001
 weight_decay: 0.0001
+optimizer: adam
+schedule: cosine
+warmup_epochs: 2
+min_lr_fraction: 0.01
+early_stopping_patience: 8
+grad_clip: 5.0

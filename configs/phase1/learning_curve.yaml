@@ -1,0 +1,44 @@
+# Few-shot learning curves (PLAN.md section 4's evaluation rule; E1 in
+# docs/research_plan.md). Same protocol as the baseline, swept over
+# training-set size.
+#
+# Caveat to carry into any write-up: n_val_per_class stays fixed at 40
+# while training shrinks to 5/class, so at the small end the model selects
+# on far more data than it trains on. That is not a realistic few-shot
+# setting; it is a deliberate choice to keep selection noise from
+# swamping the comparison, and it is applied identically to every model.
+# The absolute few-shot numbers are therefore optimistic for all models,
+# and only the gaps between them should be read.
+phase: phase1
+experiment: learning_curve
+
+image_size: 64
+n_val_per_class: 40
+n_test_per_class: 100
+distractor_prob: 0.0
+
+sweep:
+  n_train_per_class: [5, 10, 25, 50, 100, 250]
+
+seeds: [0, 1, 2]
+test_seed: 12345
+epochs: 60
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 200
+
+models:
+  - name: cnn
+    kind: cnn
+    augment: none
+  - name: cnn_aug
+    kind: cnn
+    augment: standard
+  - name: gnn_oracle
+    kind: gnn
+    extractor: oracle
+  - name: gnn_classical
+    kind: gnn
+    extractor: classical
