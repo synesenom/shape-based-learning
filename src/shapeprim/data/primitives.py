@@ -26,7 +26,7 @@ Color = Tuple[int, int, int]
 # contour-based extractor to find. The outline is a fixed rendering
 # convention, not semantic data, so it isn't a dataclass field.
 OUTLINE_COLOR: Color = (255, 255, 255)
-OUTLINE_WIDTH = 2
+OUTLINE_WIDTH = 3
 
 
 @dataclass

@@ -51,17 +51,20 @@ CLASS_TEMPLATES: dict[str, ClassTemplate] = {
             # frame: the wide base is up top (seat/head tube), the apex is the
             # bottom bracket, a single low point between the wheels.
             PrimitiveSpec("triangle", 0.5, 0.45, 0.3, 0.32, rotation=PI, name="frame"),
-            # Chainstay + fork: lines from the bottom-bracket apex down to each
-            # wheel hub -- the feature that reads as "bike" rather than "triangle + circles".
-            PrimitiveSpec("line", 0.36, 0.68, 0.313, 0.05, rotation=2.678, name="chainstay"),
-            PrimitiveSpec("line", 0.64, 0.68, 0.313, 0.05, rotation=0.464, name="fork"),
-            PrimitiveSpec("line", 0.62, 0.26, 0.14, 0.05, rotation=-0.2, name="handlebar"),
+            # Chainstay + fork: lines from the bottom-bracket apex to just
+            # inside each wheel's rim (not the wheel's center -- a line
+            # plunging deep into a circle's interior meets it at a near-
+            # tangent angle that can leave a 1px gap in the outline stroke,
+            # merging the two into one blob; see the person template).
+            PrimitiveSpec("line", 0.4248, 0.6476, 0.168, 0.05, rotation=2.678, name="chainstay"),
+            PrimitiveSpec("line", 0.5752, 0.6476, 0.168, 0.05, rotation=0.4636, name="fork"),
+            PrimitiveSpec("line", 0.62, 0.26, 0.22, 0.05, rotation=-0.2, name="handlebar"),
         ],
     ),
     "car": ClassTemplate(
         "car",
         [
-            PrimitiveSpec("rectangle", 0.5, 0.55, 0.88, 0.34, name="body"),
+            PrimitiveSpec("rectangle", 0.5, 0.55, 0.8, 0.36, name="body"),
             PrimitiveSpec("rectangle", 0.34, 0.4, 0.22, 0.18, name="window_left"),
             PrimitiveSpec("rectangle", 0.66, 0.4, 0.22, 0.18, name="window_right"),
             PrimitiveSpec("circle", 0.28, 0.78, 0.2, 0.2, name="wheel_left"),
@@ -98,7 +101,7 @@ CLASS_TEMPLATES: dict[str, ClassTemplate] = {
     "tree": ClassTemplate(
         "tree",
         [
-            PrimitiveSpec("rectangle", 0.5, 0.76, 0.16, 0.4, name="trunk"),
+            PrimitiveSpec("rectangle", 0.5, 0.76, 0.2, 0.4, name="trunk"),
             PrimitiveSpec("triangle", 0.5, 0.34, 0.56, 0.5, name="crown"),
         ],
     ),
@@ -122,10 +125,16 @@ CLASS_TEMPLATES: dict[str, ClassTemplate] = {
         [
             PrimitiveSpec("circle", 0.5, 0.18, 0.26, 0.26, name="head"),
             PrimitiveSpec("rectangle", 0.5, 0.52, 0.3, 0.4, name="body"),
-            PrimitiveSpec("line", 0.28, 0.45, 0.28, 0.05, rotation=0.5, name="arm_left"),
-            PrimitiveSpec("line", 0.72, 0.45, 0.28, 0.05, rotation=-0.5, name="arm_right"),
-            PrimitiveSpec("line", 0.4, 0.85, 0.32, 0.05, rotation=1.3, name="leg_left"),
-            PrimitiveSpec("line", 0.6, 0.85, 0.32, 0.05, rotation=1.84, name="leg_right"),
+            # Limbs are shortened so their inner end just touches the body's
+            # edge instead of plunging deep into its interior: a deep
+            # penetration makes the join between limb and body nearly
+            # tangent, which can leave a 1px gap in the outline stroke at
+            # that acute angle and let the two same-colored fills merge
+            # into one blob (breaking classical extraction).
+            PrimitiveSpec("line", 0.2623, 0.4404, 0.2398, 0.05, rotation=0.5, name="arm_left"),
+            PrimitiveSpec("line", 0.7377, 0.4404, 0.2398, 0.05, rotation=-0.5, name="arm_right"),
+            PrimitiveSpec("line", 0.4007, 0.8524, 0.3149, 0.05, rotation=1.3, name="leg_left"),
+            PrimitiveSpec("line", 0.5993, 0.8525, 0.3149, 0.05, rotation=1.84, name="leg_right"),
         ],
     ),
     "fish": ClassTemplate(
