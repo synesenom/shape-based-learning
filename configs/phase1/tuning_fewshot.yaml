@@ -1,0 +1,73 @@
+# Hyperparameter budget, spent where it can actually discriminate.
+#
+# The first tuning sweep (configs/phase1/tuning.yaml) ran at 150 examples
+# per class and every configuration reached validation accuracy 1.0000.
+# A budget spent at a saturated operating point has not been spent: it
+# cannot rank configurations, so "we tuned both sides equally" would be
+# true and meaningless.
+#
+# This runs the identical four-trial grid per model at 10 examples per
+# class, which is inside the few-shot regime the paper's claims live in
+# and where the models are far from ceiling. It is also roughly fifteen
+# times cheaper per run, so the informative sweep costs less than the
+# uninformative one did.
+#
+# Selection is on validation accuracy, as before. The chosen settings go
+# into configs/model/*.yaml and the headline numbers are then measured
+# with the multi-seed protocol.
+phase: phase1
+experiment: tuning_fewshot
+
+image_size: 64
+n_train_per_class: 10
+n_val_per_class: 40
+# Carried only because the driver always evaluates test once. These
+# numbers are not reported and must not be used to choose anything.
+n_test_per_class: 20
+distractor_prob: 0.0
+
+# Two seeds even for tuning: at 10 examples per class a single run's
+# validation accuracy is noisy enough to rank configurations by luck.
+seeds: [0, 1]
+test_seed: 12345
+epochs: 60
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 50
+
+models:
+  - name: cnn_adam_lr1e-3
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: adam, lr: 0.001, weight_decay: 0.0001, early_stopping_patience: 15}
+  - name: cnn_adam_lr3e-4
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: adam, lr: 0.0003, weight_decay: 0.0001, early_stopping_patience: 15}
+  - name: cnn_sgd_lr5e-2
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: sgd, lr: 0.05, weight_decay: 0.0005, early_stopping_patience: 15}
+  - name: cnn_adamw_lr1e-3
+    kind: cnn
+    augment: none
+    model_overrides: {optimizer: adamw, lr: 0.001, weight_decay: 0.01, early_stopping_patience: 15}
+
+  - name: gnn_adam_lr1e-3
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: adam, lr: 0.001, weight_decay: 0.0001, early_stopping_patience: 15}
+  - name: gnn_adam_lr3e-3
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: adam, lr: 0.003, weight_decay: 0.0001, early_stopping_patience: 15}
+  - name: gnn_sgd_lr5e-2
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: sgd, lr: 0.05, weight_decay: 0.0005, early_stopping_patience: 15}
+  - name: gnn_adamw_lr1e-3
+    kind: gnn
+    extractor: oracle
+    model_overrides: {optimizer: adamw, lr: 0.001, weight_decay: 0.01, early_stopping_patience: 15}
