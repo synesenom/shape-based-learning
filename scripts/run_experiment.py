@@ -39,7 +39,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from shapeprim.data.augment import resolve_augment  # noqa: E402
 from shapeprim.data.objects import CLASS_NAMES  # noqa: E402
-from shapeprim.data.synth_dataset import GenerationConfig  # noqa: E402
+from shapeprim.conditions import Condition, resolve_condition  # noqa: E402
 from shapeprim.data.torch_datasets import (  # noqa: E402
     GraphClassificationDataset,
     ImageClassificationDataset,
@@ -81,6 +81,8 @@ EXTRACTORS = {"oracle": OracleExtractor, "classical": ClassicalExtractor}
 # Metrics aggregated across seeds for the summary table.
 AGGREGATE_KEYS = (
     "test_acc",
+    "test_acc_indist",
+    "shift_drop",
     "best_val_acc",
     "twin_test_acc",
     "train_seconds",
@@ -94,69 +96,78 @@ def load_yaml(path: Path) -> dict:
         return yaml.safe_load(f) or {}
 
 
-def build_generation_config(cfg: dict) -> GenerationConfig:
-    """Generation config from the experiment config's own keys.
-
-    Reads every GenerationConfig field the experiment config mentions, so a
-    condition can vary scale, jitter or distractors without a code change.
-    The previous script hardcoded two fields and silently dropped the rest.
-    """
-    return GenerationConfig.from_dict(cfg)
-
-
 def make_loaders_image(
-    cfg: dict, gen_cfg: GenerationConfig, classes: List[str], seed: int, n_train: int, augment
+    cfg: dict, condition: Condition, classes: List[str], seed: int, n_train: int, augment
 ) -> Dict[str, DataLoader]:
+    """Loaders for the CNN. Train and val use the training distribution.
+
+    Under a shift, ``test`` is the shifted distribution and ``test_indist``
+    the training one, so the degradation can be measured rather than
+    guessed.
+    """
     workers = cfg.get("num_workers", 0)
-    common = dict(classes=classes, cfg=gen_cfg)
+
+    def ds(gen_cfg, n, seed_, split, aug=None):
+        return ImageClassificationDataset(
+            classes=classes, cfg=gen_cfg, n_per_class=n, seed=seed_, split=split, augment=aug
+        )
+
     # Augmentation on the training split only: an augmented validation set
     # measures a different distribution than the one selection is meant to
     # estimate, and an augmented test set is not the test set.
-    train_ds = ImageClassificationDataset(
-        **common, n_per_class=n_train, seed=seed, split="train", augment=augment
-    )
-    val_ds = ImageClassificationDataset(
-        **common, n_per_class=cfg["n_val_per_class"], seed=seed, split="val", augment=None
-    )
-    test_ds = ImageClassificationDataset(
-        **common, n_per_class=cfg["n_test_per_class"], seed=cfg["test_seed"], split="test", augment=None
-    )
-    return {
-        "train": DataLoader(train_ds, batch_size=cfg["batch_size"], shuffle=True, num_workers=workers),
-        "val": DataLoader(val_ds, batch_size=cfg["batch_size"], num_workers=workers),
-        "test": DataLoader(test_ds, batch_size=cfg["batch_size"], num_workers=workers),
+    out = {
+        "train": DataLoader(
+            ds(condition.train_cfg, n_train, seed, "train", augment),
+            batch_size=cfg["batch_size"], shuffle=True, num_workers=workers,
+        ),
+        "val": DataLoader(
+            ds(condition.train_cfg, cfg["n_val_per_class"], seed, "val"),
+            batch_size=cfg["batch_size"], num_workers=workers,
+        ),
+        "test": DataLoader(
+            ds(condition.test_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test"),
+            batch_size=cfg["batch_size"], num_workers=workers,
+        ),
     }
+    if condition.is_shift:
+        out["test_indist"] = DataLoader(
+            ds(condition.train_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test"),
+            batch_size=cfg["batch_size"], num_workers=workers,
+        )
+    return out
 
 
 def make_loaders_graph(
-    cfg: dict, gen_cfg: GenerationConfig, classes: List[str], seed: int, n_train: int, extractor_name: str
+    cfg: dict, condition: Condition, classes: List[str], seed: int, n_train: int, extractor_name: str
 ) -> tuple[Dict[str, DataLoader], Dict[str, GraphClassificationDataset]]:
     workers = cfg.get("num_workers", 0)
     cache_dir = REPO_ROOT / cfg["cache_dir"] if cfg.get("cache_dir") else None
     extractor = EXTRACTORS[extractor_name]()
-    common = dict(classes=classes, cfg=gen_cfg, cache_dir=cache_dir)
+
+    def ds(gen_cfg, n, seed_, split):
+        return GraphClassificationDataset(
+            extractor, classes=classes, cfg=gen_cfg, cache_dir=cache_dir,
+            n_per_class=n, seed=seed_, split=split,
+        )
 
     datasets = {
-        "train": GraphClassificationDataset(extractor, **common, n_per_class=n_train, seed=seed, split="train"),
-        "val": GraphClassificationDataset(
-            extractor, **common, n_per_class=cfg["n_val_per_class"], seed=seed, split="val"
-        ),
-        "test": GraphClassificationDataset(
-            extractor, **common, n_per_class=cfg["n_test_per_class"], seed=cfg["test_seed"], split="test"
-        ),
+        "train": ds(condition.train_cfg, n_train, seed, "train"),
+        "val": ds(condition.train_cfg, cfg["n_val_per_class"], seed, "val"),
+        "test": ds(condition.test_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test"),
     }
+    if condition.is_shift:
+        datasets["test_indist"] = ds(condition.train_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test")
+
     # Extract once, in this process, before any DataLoader worker forks.
-    for ds in datasets.values():
-        ds.prewarm(verbose=cfg.get("verbose", False))
+    for d in datasets.values():
+        d.prewarm(verbose=cfg.get("verbose", False))
 
     loaders = {
-        "train": DataLoader(
-            datasets["train"], batch_size=cfg["batch_size"], shuffle=True, num_workers=workers, collate_fn=collate_graphs
-        ),
-        "val": DataLoader(datasets["val"], batch_size=cfg["batch_size"], num_workers=workers, collate_fn=collate_graphs),
-        "test": DataLoader(
-            datasets["test"], batch_size=cfg["batch_size"], num_workers=workers, collate_fn=collate_graphs
-        ),
+        name: DataLoader(
+            d, batch_size=cfg["batch_size"], shuffle=(name == "train"),
+            num_workers=workers, collate_fn=collate_graphs,
+        )
+        for name, d in datasets.items()
     }
     return loaders, datasets
 
@@ -187,10 +198,10 @@ def run_one(
     seed: int,
     n_train: int,
     device: str,
+    condition: Condition,
 ) -> Dict[str, Any]:
     """One (model, condition, seed) run. Returns the metrics record."""
     kind = spec["kind"]
-    gen_cfg = build_generation_config(cfg)
     set_all_seeds(seed)
 
     extractor_report: Optional[dict] = None
@@ -199,7 +210,7 @@ def run_one(
         model_cfg = dict(model_configs["cnn"])
         model_cfg.update(spec.get("model_overrides", {}))
         augment = resolve_augment(spec.get("augment"))
-        loaders = make_loaders_image(cfg, gen_cfg, classes, seed, n_train, augment)
+        loaders = make_loaders_image(cfg, condition, classes, seed, n_train, augment)
         model = build_cnn(num_classes=len(classes), pretrained=model_cfg.get("pretrained", False))
         forward_fn = cnn_forward
         augment_record = augment.to_dict()
@@ -207,7 +218,7 @@ def run_one(
         model_cfg = dict(model_configs["gnn"])
         model_cfg.update(spec.get("model_overrides", {}))
         extractor_name = spec["extractor"]
-        loaders, datasets = make_loaders_graph(cfg, gen_cfg, classes, seed, n_train, extractor_name)
+        loaders, datasets = make_loaders_graph(cfg, condition, classes, seed, n_train, extractor_name)
         model = GNNClassifier(
             NUM_NODE_FEATURES,
             NUM_EDGE_FEATURES,
@@ -239,6 +250,11 @@ def run_one(
 
     # The single, final look at the test set, on best-validation weights.
     test_acc = evaluate_classifier(model, forward_fn, loaders["test"], device)
+    test_acc_indist = (
+        evaluate_classifier(model, forward_fn, loaders["test_indist"], device)
+        if "test_indist" in loaders
+        else None
+    )
     per_class = per_class_accuracy(model, forward_fn, loaders["test"], device, classes=classes)
     twins = [c for c in RELATION_TWINS if c in classes]
     twin_acc = (
@@ -253,6 +269,11 @@ def run_one(
         "seed": seed,
         "n_train_per_class": n_train,
         "test_acc": test_acc,
+        "test_acc_indist": test_acc_indist,
+        # Positive = the shift hurt. This, not the shifted accuracy alone,
+        # is the quantity a viewpoint/invariance claim rests on.
+        "shift_drop": (test_acc_indist - test_acc) if test_acc_indist is not None else None,
+        "condition": condition.describe(),
         "best_val_acc": result.best_val_acc,
         "best_epoch": result.best_epoch,
         "epochs_run": result.epochs_run,
@@ -312,6 +333,8 @@ def main() -> None:
         if not specs:
             raise SystemExit(f"no models named {args.models} in {args.config}")
 
+    condition = resolve_condition(cfg)
+
     sweep = cfg.get("sweep") or {}
     n_train_values = sweep.get("n_train_per_class") or [cfg["n_train_per_class"]]
 
@@ -322,6 +345,12 @@ def main() -> None:
         f"{cfg['phase']}/{cfg['experiment']}: {len(plan)} runs "
         f"({len(specs)} models x {len(n_train_values)} sizes x {len(seeds)} seeds) on {device}"
     )
+    if condition.is_shift:
+        changed = condition.describe()["changed"]
+        print(f"  shift {condition.name!r}: " + ", ".join(
+            f"{k} {v['train']} -> {v['test']}" for k, v in changed.items()
+        ))
+        print("  validation follows the TRAINING distribution (selection cannot see the shift)")
     if args.dry_run:
         for spec, n_train, seed in plan:
             print(f"  {run_id_for(spec['name'], seed, n=n_train)}")
@@ -342,15 +371,26 @@ def main() -> None:
                 continue
 
         print(f"[{i}/{len(plan)}] {run_id} ...", flush=True)
-        record = run_one(spec, cfg, model_configs, classes, seed, n_train, device)
+        record = run_one(spec, cfg, model_configs, classes, seed, n_train, device, condition)
         run_dir.save_config(
-            {"experiment": cfg, "model_spec": spec, "seed": seed, "n_train_per_class": n_train, "classes": classes},
+            {
+                "experiment": cfg,
+                "model_spec": spec,
+                "seed": seed,
+                "n_train_per_class": n_train,
+                "classes": classes,
+                "condition": condition.describe(),
+            },
             repo_root=REPO_ROOT,
         )
         run_dir.save_metrics(record)
         records.append(record)
 
         extra = f", extractor F1 = {record['extractor_f1']:.3f}" if "extractor_f1" in record else ""
+        if record.get("shift_drop") is not None:
+            extra = (
+                f", in-dist {record['test_acc_indist']:.3f}, drop {record['shift_drop']:+.3f}" + extra
+            )
         print(
             f"      test acc = {record['test_acc']:.3f} (val {record['best_val_acc']:.3f}, "
             f"best epoch {record['best_epoch']}, {record['train_seconds']:.0f}s){extra}",
@@ -367,6 +407,7 @@ def main() -> None:
         # ~11.2M parameters against the GNN's ~57k, and a sample-efficiency
         # claim that doesn't state that gap invites the obvious objection.
         "n_parameters": {r["model"]: r["n_parameters"] for r in records},
+        "condition": condition.describe(),
     }
     for n_train in n_train_values:
         per_model = {}
@@ -378,7 +419,10 @@ def main() -> None:
 
         print()
         print(f"n_train_per_class = {n_train}")
-        print(format_aggregate_table(per_model, metric="test_acc", extra=["twin_test_acc", "extractor_f1"]))
+        extra_cols = (
+            ["test_acc_indist", "shift_drop"] if condition.is_shift else ["twin_test_acc", "extractor_f1"]
+        )
+        print(format_aggregate_table(per_model, metric="test_acc", extra=extra_cols))
 
     out_path = results_root / cfg["phase"] / cfg["experiment"] / "summary.json"
     write_json(out_path, summary)
