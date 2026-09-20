@@ -8,6 +8,7 @@ venv/
 results/**/*.png
 results/**/*.json
 !results/phase1/sample_grid.png
+!results/phase1/cnn_vs_gnn.json
 !results/.gitkeep
 *.pt
 *.pth
