@@ -1,0 +1,59 @@
+# Position / scale shift (PLAN.md section 5; experiment 2 in
+# docs/phase1_evaluation_next_steps.md; WP0 item 4's shift table).
+#
+# Train with objects small and centred, test with them large and
+# off-centre. The primitive graph normalises every feature by the object's
+# own bounding box, so the oracle GNN should be close to unaffected by
+# construction -- tests/test_graph_build.py proves the invariance. If it
+# degrades anyway, the invariance claim or its test is wrong, and that is
+# the most informative outcome this config can produce.
+#
+# The pixel baseline is run both with and without augmentation, and with a
+# `strong` preset whose translate/scale ranges cover the shifted test
+# condition. The un-augmented CNN is expected to degrade; the interesting
+# question is whether the augmented one closes the gap, because if it does
+# then the position/scale advantage is an augmentation result rather than
+# a representation result.
+phase: phase1
+experiment: shift_position_scale
+
+image_size: 64
+n_train_per_class: 150
+n_val_per_class: 40
+n_test_per_class: 100
+distractor_prob: 0.0
+
+shift:
+  name: position_scale
+  train:
+    object_scale_range: [0.40, 0.55]
+    position_jitter: 0.03
+  test:
+    object_scale_range: [0.70, 0.90]
+    position_jitter: 0.25
+
+seeds: [0, 1, 2]
+test_seed: 12345
+epochs: 30
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 200
+
+models:
+  - name: cnn
+    kind: cnn
+    augment: none
+  - name: cnn_aug
+    kind: cnn
+    augment: standard
+  - name: cnn_aug_strong
+    kind: cnn
+    augment: strong
+  - name: gnn_oracle
+    kind: gnn
+    extractor: oracle
+  - name: gnn_classical
+    kind: gnn
+    extractor: classical

@@ -98,6 +98,45 @@ rather than as "± 0.000".
   an extractor is ever made stochastic, that digest stops being sufficient
   and the cache must key on its seed too.
 
+## Shift experiments (train on A, test on B)
+
+A `shift` block in the experiment config names overrides for the training
+distribution and the test distribution, both applied on top of the base
+generation settings:
+
+```yaml
+shift:
+  name: position_scale
+  train: {object_scale_range: [0.40, 0.55], position_jitter: 0.03}
+  test:  {object_scale_range: [0.70, 0.90], position_jitter: 0.25}
+```
+
+Three rules are enforced in code rather than left to discipline
+(`src/shapeprim/conditions.py`):
+
+- **Validation follows the training distribution.** At selection time the
+  shifted distribution is not available -- that is the premise of a shift
+  test. Selecting on shifted validation data leaks the test condition into
+  training and turns a generalization measurement into a weak form of
+  training on the target.
+- **The in-distribution test set is measured too.** A shifted accuracy
+  alone is uninterpretable: 0.70 means one thing against an
+  in-distribution 0.71 and something else against 1.00. Runs report
+  `test_acc` (shifted), `test_acc_indist`, and `shift_drop`, and the drop
+  is the quantity an invariance claim rests on. Both test sets are drawn
+  from the same seed and split, so they differ only in the distribution
+  parameters -- paired samples, which tightens the estimate of the drop.
+- **A shift that changes nothing is an error.** An override block that
+  leaves the two distributions identical, or that names a field
+  `GenerationConfig` does not have, raises rather than silently reporting
+  "no degradation" for the wrong reason.
+
+The pixel baseline must be run with augmentation matched to the shift
+(the `strong` preset for position/scale), not only un-augmented. The
+primitive graph is invariant by construction, so a gap measured only
+against an un-augmented CNN is an augmentation result wearing a
+representation result's clothes.
+
 ## Adding a condition
 
 A new experimental condition is a YAML file, not code. Any

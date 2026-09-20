@@ -46,8 +46,13 @@ SERIES_COLORS = {
     "cnn_aug": "#eb6834",
     "gnn_oracle": "#1baf7a",
     "gnn_classical": "#eda100",
+    "cnn_aug_strong": "#e87ba4",
 }
 FALLBACK_COLORS = ["#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+
+# Two-condition series for the shift chart: slots 1 and 2, validated as a
+# pair (CVD dE 24.7, normal-vision 33.6, both above 3:1 on the surface).
+CONDITION_COLORS = {"in-distribution": "#2a78d6", "shifted": "#eb6834"}
 
 TEXT_PRIMARY = "#0b0b0b"
 TEXT_SECONDARY = "#52514e"
@@ -56,7 +61,8 @@ SURFACE = "#fcfcfb"
 
 DISPLAY_NAMES = {
     "cnn": "CNN",
-    "cnn_aug": "CNN + augmentation",
+    "cnn_aug": "CNN + aug",
+    "cnn_aug_strong": "CNN + strong aug",
     "gnn_oracle": "GNN (oracle)",
     "gnn_classical": "GNN (classical)",
 }
@@ -227,6 +233,74 @@ def plot_single_condition(summary: dict, out_path: Path, metric: str = "test_acc
     plt.close(fig)
 
 
+def plot_shift(summary: dict, out_path: Path) -> None:
+    """Grouped bars: in-distribution vs shifted accuracy, per model.
+
+    Two series, so a legend is always present and each bar is directly
+    labelled -- identity is never carried by colour alone. The drop is
+    annotated beneath each pair, because the drop, not the shifted
+    accuracy, is what an invariance claim rests on.
+    """
+    conditions = summary["conditions"]
+    size = sorted(int(k) for k in conditions)[0]
+    per_model = conditions[str(size)]
+    models = [
+        m for m in model_order(conditions)
+        if _value(per_model.get(m, {}).get("test_acc")) is not None
+    ]
+
+    fig, ax = plt.subplots(figsize=(8.0, 4.6), dpi=200)
+    fig.patch.set_facecolor(SURFACE)
+    _style_axes(ax)
+    ax.grid(True, axis="y", color=GRID, linewidth=0.8)
+    ax.grid(False, axis="x")
+
+    width = 0.36
+    gap = 0.02  # surface gap between adjacent fills
+    for i, model in enumerate(models):
+        agg = per_model[model]
+        pairs = [
+            ("in-distribution", _value(agg.get("test_acc_indist")), _ci(agg.get("test_acc_indist"))),
+            ("shifted", _value(agg.get("test_acc")), _ci(agg.get("test_acc"))),
+        ]
+        for j, (label, mean, err) in enumerate(pairs):
+            if mean is None:
+                continue
+            x = i + (j - 0.5) * (width + gap)
+            ax.bar(x, mean, width=width, color=CONDITION_COLORS[label], zorder=3,
+                   label=label if i == 0 else None)
+            hi = min(err, 1.15 - mean)
+            ax.errorbar(x, mean, yerr=[[min(err, mean)], [hi]], fmt="none",
+                        ecolor=TEXT_SECONDARY, elinewidth=1.1, capsize=3, zorder=4)
+            ax.annotate(f"{mean:.3f}", xy=(x, min(mean + err, 1.15)), xytext=(0, 5),
+                        textcoords="offset points", ha="center", color=TEXT_SECONDARY, fontsize=7.5)
+
+        drop = _value(agg.get("shift_drop"))
+        if drop is not None:
+            ax.annotate(f"drop {drop:+.3f}", xy=(i, 0), xytext=(0, -28),
+                        textcoords="offset points", ha="center",
+                        color=TEXT_SECONDARY, fontsize=8)
+
+    ax.set_xticks(range(len(models)))
+    ax.set_xticklabels([display_name(m) for m in models], fontsize=9, color=TEXT_SECONDARY)
+    ax.tick_params(axis="x", pad=18)
+    ax.set_ylabel("test accuracy", color=TEXT_SECONDARY, fontsize=10)
+    ax.set_ylim(0, 1.27)
+    ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+    cond = summary.get("condition", {})
+    n_seeds = len(summary.get("seeds", []))
+    ax.set_title(
+        f"Shift: {cond.get('name', '?')} ({n_seeds} seeds, bars = 95% CI)",
+        color=TEXT_PRIMARY, fontsize=12, pad=12, loc="left",
+    )
+    legend = ax.legend(frameon=False, fontsize=9, loc="lower right", ncol=2)
+    for text in legend.get_texts():
+        text.set_color(TEXT_SECONDARY)
+    fig.tight_layout()
+    fig.savefig(out_path, facecolor=SURFACE)
+    plt.close(fig)
+
+
 def _cell(entry: Optional[dict], digits: int = 3) -> str:
     mean = _value(entry)
     if mean is None:
@@ -256,26 +330,55 @@ def write_markdown(summary: dict, out_path: Path) -> None:
         "",
     ]
 
+    cond = summary.get("condition", {})
+    is_shift = cond.get("is_shift", False)
+    if is_shift:
+        changed = ", ".join(
+            f"`{k}` {v['train']} → {v['test']}" for k, v in cond.get("changed", {}).items()
+        )
+        lines += [
+            f"Shift **{cond.get('name')}**: {changed}.",
+            "",
+            "Validation follows the *training* distribution: at selection time the "
+            "shifted distribution is not available, and selecting on it would leak "
+            "the test condition into training.",
+            "",
+        ]
+
     for n in sizes:
         per_model = conditions[str(n)]
-        lines += [
-            f"## {n} training examples per class",
-            "",
-            "| model | test accuracy | val accuracy | tree/arrow_sign | extractor F1 | train (s) | params |",
-            "|---|---|---|---|---|---|---|",
-        ]
+        lines.append(f"## {n} training examples per class")
+        lines.append("")
+        if is_shift:
+            lines += [
+                "| model | in-distribution | shifted | drop | val accuracy | extractor F1 | params |",
+                "|---|---|---|---|---|---|---|",
+            ]
+        else:
+            lines += [
+                "| model | test accuracy | val accuracy | tree/arrow_sign | extractor F1 | train (s) | params |",
+                "|---|---|---|---|---|---|---|",
+            ]
         for model in models:
             agg = per_model.get(model)
             if not agg:
                 continue
             params = summary.get("n_parameters", {}).get(model)
             params_text = f"{params:,}" if params else "-"
-            lines.append(
-                f"| {display_name(model)} | {_cell(agg.get('test_acc'))} | "
-                f"{_cell(agg.get('best_val_acc'))} | {_cell(agg.get('twin_test_acc'))} | "
-                f"{_cell(agg.get('extractor_f1'))} | {_cell(agg.get('train_seconds'), 0)} | "
-                f"{params_text} |"
-            )
+            if is_shift:
+                lines.append(
+                    f"| {display_name(model)} | {_cell(agg.get('test_acc_indist'))} | "
+                    f"{_cell(agg.get('test_acc'))} | {_cell(agg.get('shift_drop'))} | "
+                    f"{_cell(agg.get('best_val_acc'))} | {_cell(agg.get('extractor_f1'))} | "
+                    f"{params_text} |"
+                )
+            else:
+                lines.append(
+                    f"| {display_name(model)} | {_cell(agg.get('test_acc'))} | "
+                    f"{_cell(agg.get('best_val_acc'))} | {_cell(agg.get('twin_test_acc'))} | "
+                    f"{_cell(agg.get('extractor_f1'))} | {_cell(agg.get('train_seconds'), 0)} | "
+                    f"{params_text} |"
+                )
         lines.append("")
 
     out_path.write_text("\n".join(lines))
@@ -296,7 +399,10 @@ def main() -> None:
     out_dir = summary_path.parent
     sizes = sorted(int(k) for k in summary["conditions"])
 
-    if len(sizes) > 1:
+    if summary.get("condition", {}).get("is_shift") and len(sizes) == 1:
+        fig_path = out_dir / "shift.png"
+        plot_shift(summary, fig_path)
+    elif len(sizes) > 1:
         fig_path = out_dir / "learning_curve.png"
         plot_learning_curve(summary, fig_path, metric=args.metric)
     else:
