@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+/data/
+results/**/*.png
+results/**/*.json
+!results/phase1/sample_grid.png
+!results/.gitkeep
+*.pt
+*.pth
+.DS_Store

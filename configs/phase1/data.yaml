@@ -1,0 +1,29 @@
+# Phase 1 synthetic data generation config (PLAN.md section 5).
+image_size: 128
+classes:
+  - bicycle
+  - car
+  - truck
+  - cat_face
+  - house
+  - tree
+  - arrow_sign
+  - snowman
+  - person
+  - fish
+
+n_train_per_class: 1000
+n_test_per_class: 200
+seed: 0
+
+object_scale_range: [0.5, 0.85]
+position_jitter: 0.08
+part_size_jitter: 0.08
+part_pos_jitter: 0.02
+color: [40, 40, 40]
+color_jitter: 15
+background: [255, 255, 255]
+distractor_prob: 0.15
+max_distractors: 2
+
+output_dir: data/phase1
