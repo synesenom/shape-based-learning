@@ -94,6 +94,10 @@ def make_extractor(spec: dict):
                 "scripts/train_learned_extractor.py"
             )
         return LearnedExtractor(weights, threshold=spec.get("extractor_threshold", 0.3))
+    if name == "samfit":
+        from shapeprim.extract.sam_fit import SamFitExtractor
+
+        return SamFitExtractor()
     return EXTRACTORS[name]()
 
 # Every primitive-side model consumes the same graph batches; they differ
@@ -302,10 +306,11 @@ def run_one(
         forward_fn = gnn_forward
         augment_record = None
         # Extraction quality on the same primitives the model is scored on.
-        extractor_report = evaluate_extractor(
-            datasets["test"], max_samples=cfg.get("extractor_eval_samples", 200)
-        )
-        extra_f1 = {
+        # extractor_eval_samples: 0 means there is no primitive ground truth
+        # (real photos), so no F1 is computed rather than a meaningless one.
+        n_eval = cfg.get("extractor_eval_samples", 200)
+        extractor_report = evaluate_extractor(datasets["test"], max_samples=n_eval) if n_eval else None
+        extra_f1 = {} if not n_eval else {
             name[len("test__"):]: evaluate_extractor(
                 d, max_samples=cfg.get("extractor_eval_samples", 200), per_class=False
             )["f1"]

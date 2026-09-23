@@ -3,8 +3,8 @@
 # Ten QuickDraw classes that decompose into primitives. The graph models'
 # primitives come from stroke fitting (extract/strokes.py; the "oracle"
 # extractor here returns the stroke fit -- there is no human primitive
-# annotation, so the extractor F1 printed for these runs is 1.0 by
-# definition and meaningless; the fitter's F1 on synthetic sketches with
+# annotation, so no extractor F1 is computed for these runs
+# (extractor_eval_samples: 0); the fitter's F1 on synthetic sketches with
 # known ground truth is reported separately in
 # results/phase3/strokefit_proxy/).
 phase: phase3
@@ -25,7 +25,7 @@ batch_size: 32
 num_workers: 0
 device: auto
 cache_dir: data/cache
-extractor_eval_samples: 50
+extractor_eval_samples: 0
 
 models:
   - {name: cnn, kind: cnn, augment: none}

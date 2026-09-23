@@ -23,7 +23,7 @@ batch_size: 32
 num_workers: 0
 device: auto
 cache_dir: data/cache
-extractor_eval_samples: 50
+extractor_eval_samples: 0
 
 shift:
   name: synthetic_to_quickdraw

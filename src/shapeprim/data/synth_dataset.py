@@ -349,4 +349,13 @@ def make_source(classes, n_per_class: int, cfg: "GenerationConfig", seed: int = 
         from .real import QuickDrawDataset
 
         return QuickDrawDataset(classes, n_per_class, cfg, seed=seed, split=split or "train")
-    raise ValueError(f"unknown source {cfg.source!r}; known: synthetic, quickdraw")
+    if cfg.source == "coco":
+        from .real import CocoCropDataset
+
+        return CocoCropDataset(classes, n_per_class, cfg, seed=seed, split=split or "train")
+    if cfg.source.startswith("mvh_"):
+        # Test-only sets: every image of the requested classes, whatever n is.
+        from .real import MvhDataset
+
+        return MvhDataset(cfg.source[len("mvh_"):], classes, cfg)
+    raise ValueError(f"unknown source {cfg.source!r}; known: synthetic, quickdraw, coco, mvh_<kind>")

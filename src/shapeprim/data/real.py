@@ -121,3 +121,95 @@ class QuickDrawDataset(Sequence):
             primitives=self.fitter.fit(strokes, size),
             label=c,
         )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3c: real photographs and out-of-distribution renderings.
+
+COCO_DIR = REPO_ROOT / "data" / "coco"
+MVH_DIR = REPO_ROOT / "data" / "mvh"
+# Experiment class names -> the 16-class ImageNet-derived labels used by the
+# model-vs-human datasets (Geirhos et al.).
+MVH_LABEL = {"bicycle": "bicycle", "car": "car", "truck": "truck", "cat_face": "cat"}
+COCO_VAL_CROPS = 30  # the first 30 train2017 crops per class are validation
+
+
+def _load_rgb(path: Path, size: int) -> Image.Image:
+    img = Image.open(path).convert("RGB")
+    if img.size != (size, size):
+        img = img.resize((size, size), Image.BICUBIC)
+    return img
+
+
+class CocoCropDataset(Sequence):
+    """COCO crops (scripts/fetch_coco_crops.py). No primitive ground truth."""
+
+    def __init__(self, classes, n_per_class: int, cfg, seed: int = 0, split: str = "train"):
+        index = json.loads((COCO_DIR / "crops" / "index.json").read_text())
+        self.cfg = cfg
+        self.classes = list(classes)
+        self._items: List[Tuple[str, Path]] = []
+        for c in self.classes:
+            if split == "test":
+                paths = index["test"][c][:n_per_class]
+            else:
+                pool = index["train"][c]
+                region = pool[:COCO_VAL_CROPS] if split == "val" else pool[COCO_VAL_CROPS:]
+                if n_per_class > len(region):
+                    raise ValueError(f"COCO {c}: {n_per_class} requested, {len(region)} in the {split} region")
+                paths = random.Random(f"{seed}|{split}|{c}").sample(region, n_per_class)
+            self._items += [(c, COCO_DIR / p) for p in paths]
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __getitem__(self, index: int):
+        from .synth_dataset import Sample
+
+        c, path = self._items[index]
+        return Sample(image=_load_rgb(path, self.cfg.image_size), primitives=[], label=c)
+
+
+def mvh_files(kind: str, classes: Sequence[str]) -> List[Tuple[str, Path]]:
+    """(class, path) for a model-vs-human dataset, restricted to ``classes``.
+
+    ``cue`` is the cue-conflict set: shape from one class, texture from
+    another. Only images whose shape *and* texture classes are both in
+    ``classes`` are kept, so the texture is a competing answer the model
+    can actually give; the label is the shape class.
+    """
+    wanted = {MVH_LABEL[c]: c for c in classes if c in MVH_LABEL}
+    out: List[Tuple[str, Path]] = []
+    if kind == "cue":
+        for shape_label, c in wanted.items():
+            for p in sorted((MVH_DIR / "cue-conflict" / shape_label).glob("*.png")):
+                texture = p.stem.split("-")[1].rstrip("0123456789")
+                if texture in wanted and texture != shape_label:
+                    out.append((c, p))
+        return out
+    folder = {"sketch": "sketch", "stylized": "stylized", "edge": "edge", "silhouette": "silhouette"}[kind]
+    for p in sorted((MVH_DIR / folder).rglob("*.png")):
+        label = p.stem.split("_")[4] if "_dnn_" in p.name else p.parent.name
+        if label in wanted:
+            out.append((wanted[label], p))
+    return out
+
+
+class MvhDataset(Sequence):
+    """A model-vs-human test set (every image of the requested classes)."""
+
+    def __init__(self, kind: str, classes, cfg):
+        self.cfg = cfg
+        self.classes = list(classes)
+        self._items = mvh_files(kind, classes)
+        if not self._items:
+            raise FileNotFoundError(f"no model-vs-human '{kind}' images for {classes} under {MVH_DIR}")
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __getitem__(self, index: int):
+        from .synth_dataset import Sample
+
+        c, path = self._items[index]
+        return Sample(image=_load_rgb(path, self.cfg.image_size), primitives=[], label=c)
