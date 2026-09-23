@@ -1,0 +1,133 @@
+{
+  "config": {
+    "experiment": {
+      "phase": "phase1",
+      "experiment": "shift_position_scale_fewshot",
+      "image_size": 64,
+      "n_train_per_class": 25,
+      "n_val_per_class": 40,
+      "n_test_per_class": 100,
+      "distractor_prob": 0.0,
+      "shift": {
+        "name": "position_scale",
+        "train": {
+          "object_scale_range": [
+            0.4,
+            0.55
+          ],
+          "position_jitter": 0.03
+        },
+        "test": {
+          "object_scale_range": [
+            0.7,
+            0.9
+          ],
+          "position_jitter": 0.25
+        }
+      },
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "test_seed": 12345,
+      "epochs": 60,
+      "batch_size": 32,
+      "num_workers": 0,
+      "device": "auto",
+      "cache_dir": "data/cache",
+      "extractor_eval_samples": 200,
+      "models": [
+        {
+          "name": "cnn",
+          "kind": "cnn",
+          "augment": "none"
+        },
+        {
+          "name": "cnn_aug",
+          "kind": "cnn",
+          "augment": "standard"
+        },
+        {
+          "name": "cnn_aug_strong",
+          "kind": "cnn",
+          "augment": "strong"
+        },
+        {
+          "name": "cnn_probe",
+          "kind": "cnn",
+          "model_config": "cnn_probe",
+          "augment": "none"
+        },
+        {
+          "name": "gnn_oracle",
+          "kind": "gnn",
+          "extractor": "oracle"
+        },
+        {
+          "name": "gnn_classical",
+          "kind": "gnn",
+          "extractor": "classical"
+        },
+        {
+          "name": "st_oracle",
+          "kind": "settransformer",
+          "extractor": "oracle"
+        },
+        {
+          "name": "bag_oracle",
+          "kind": "bag",
+          "extractor": "oracle"
+        }
+      ]
+    },
+    "model_spec": {
+      "name": "cnn_probe",
+      "kind": "cnn",
+      "model_config": "cnn_probe",
+      "augment": "none"
+    },
+    "seed": 1,
+    "n_train_per_class": 25,
+    "classes": [
+      "bicycle",
+      "car",
+      "truck",
+      "cat_face",
+      "house",
+      "tree",
+      "arrow_sign",
+      "snowman",
+      "person",
+      "fish"
+    ],
+    "condition": {
+      "name": "position_scale",
+      "is_shift": true,
+      "changed": {
+        "object_scale_range": {
+          "train": [
+            0.4,
+            0.55
+          ],
+          "test": [
+            0.7,
+            0.9
+          ]
+        },
+        "position_jitter": {
+          "train": 0.03,
+          "test": 0.25
+        }
+      }
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "timestamp_utc": "2026-09-23T20:24:52+00:00",
+    "git_commit": "1e69e0a7aeb502006945a105787294441770dd7c",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false
+  }
+}
