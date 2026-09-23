@@ -69,8 +69,7 @@
             "pooling": "attention"
           }
         }
-      ],
-      "min_steps": 500
+      ]
     },
     "model_spec": {
       "name": "gnn_oracle",
@@ -105,8 +104,8 @@
   "environment": {
     "python": "3.11.15",
     "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
-    "timestamp_utc": "2026-09-23T20:29:27+00:00",
-    "git_commit": "ba12fa3861fd2bbcb8b41a9ab8640a4260a59f76",
+    "timestamp_utc": "2026-09-23T20:01:39+00:00",
+    "git_commit": "bab5d193c1a7c1d5734d7c93ebd2944f670b1f7e",
     "torch": "2.14.0+cpu",
     "cuda_available": false
   }

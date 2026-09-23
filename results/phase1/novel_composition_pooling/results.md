@@ -12,7 +12,7 @@ Validation follows the *training* distribution: at selection time the shifted di
 
 | model | in-distribution | shifted | drop | val accuracy | extractor F1 | params |
 |---|---|---|---|---|---|---|
-| GNN (oracle) | 1.000 ± 0.000 | 0.502 ± 0.190 | 0.498 ± 0.190 | 1.000 ± 0.000 | 1.000 ± 0.000 | 57,549 |
+| GNN (oracle) | 1.000 ± 0.000 | 0.501 ± 0.194 | 0.499 ± 0.194 | 1.000 ± 0.000 | 1.000 ± 0.000 | 57,549 |
 | GNN (classical) | 0.987 ± 0.006 | 0.694 ± 0.012 | 0.293 ± 0.019 | 0.998 ± 0.004 | 0.647 ± 0.000 | 57,549 |
 | gnn_oracle_max | 1.000 ± 0.000 | 0.695 ± 0.220 | 0.305 ± 0.220 | 1.000 ± 0.000 | 1.000 ± 0.000 | 57,549 |
 | gnn_oracle_attn | 1.000 ± 0.000 | 0.527 ± 0.311 | 0.473 ± 0.311 | 1.000 ± 0.000 | 1.000 ± 0.000 | 61,774 |

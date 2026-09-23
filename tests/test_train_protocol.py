@@ -159,3 +159,26 @@ def test_resolve_device_maps_auto():
     assert resolve_device("auto") in ("cpu", "cuda")
     assert resolve_device(None) in ("cpu", "cuda")
     assert resolve_device("cpu") == "cpu"
+
+
+def test_early_stopping_waits_for_min_steps():
+    """Patience in epochs is meaningless at a few steps per epoch.
+
+    With a constant (never-improving) model, patience-1 stopping fires after
+    two epochs without min_steps; with min_steps it must run until the step
+    floor is reached.
+    """
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
+
+    from shapeprim.train import cnn_forward, train_classifier
+
+    torch.manual_seed(0)
+    x = torch.zeros(8, 3, 4, 4)
+    y = torch.zeros(8, dtype=torch.long)
+    loader = DataLoader(TensorDataset(x, y), batch_size=4)  # 2 steps per epoch
+    model = torch.nn.Sequential(torch.nn.Flatten(), torch.nn.Linear(48, 2))
+    fast = train_classifier(model, cnn_forward, loader, loader, epochs=50, lr=0.0, early_stopping_patience=1)
+    slow = train_classifier(model, cnn_forward, loader, loader, epochs=50, lr=0.0, early_stopping_patience=1, min_steps=20)
+    assert fast.stopped_early and fast.steps < 20
+    assert slow.stopped_early and slow.steps >= 20

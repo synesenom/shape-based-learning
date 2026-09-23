@@ -47,6 +47,18 @@ validation. The first recorded comparison used bare Adam at 1e-3 with no
 schedule and its accuracy collapsed to 0.18 and 0.61 at two points before
 recovering; a last-epoch number from that curve measures luck.
 
+**3b. A floor in optimizer steps.** Every run trains for at least 500
+optimizer steps (`min_steps`; small training sets get more epochs to reach
+it) and early stopping may not fire before them. Patience counted in
+epochs means very different amounts of training at 5 and at 1000 examples
+per class: at 25/class a patience of 8 epochs is 64 steps, shorter than
+the noisy start of an augmented CNN, and it ended runs at 0.43
+in-distribution accuracy while the learning rate was still near its peak.
+Runs recorded before this rule that stopped earlier were moved to
+`results/<phase>/superseded_patience8/` and re-run
+(`scripts/supersede_short_runs.py`); runs that trained past the floor are
+unaffected by it.
+
 **4. The same protocol on both sides.** The CNN and the GNN get the same
 schedule, warm-up, clipping, stopping rule and selection criterion. An
 advantage produced by tuning one side is exactly the artefact this

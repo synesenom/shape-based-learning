@@ -65,6 +65,7 @@ class TrainResult:
     epochs_run: int = 0
     train_seconds: float = 0.0
     stopped_early: bool = False
+    steps: int = 0
 
     @property
     def final_train_loss(self) -> float:
@@ -155,11 +156,21 @@ def train_classifier(
     grad_clip: Optional[float] = None,
     restore_best: bool = True,
     verbose: bool = False,
+    min_steps: int = 0,
 ) -> TrainResult:
     """Train on ``train_loader``, select on ``val_loader``.
 
     The returned model has the best-validation weights loaded (unless
-    ``restore_best`` is False). The test set is the caller's business and
+    ``restore_best`` is False).
+
+    ``min_steps``: early stopping may not fire before this many optimizer
+    steps. Patience counted in epochs means very different things at 5
+    and at 1000 examples per class: at 25/class (8 steps per epoch) a
+    patience of 8 epochs is 64 steps, shorter than the noisy start of an
+    augmented CNN, and it ended runs at 0.43 in-distribution accuracy
+    while the cosine learning rate was still near its peak. The floor is
+    expressed in steps so it is the same for every model (the caller also
+    raises ``epochs`` so the run can reach it; see ``epochs_for``). The test set is the caller's business and
     must be touched exactly once, after this returns.
     """
     device = resolve_device(device)
@@ -172,6 +183,7 @@ def train_classifier(
     result = TrainResult()
     best_state: Optional[Dict[str, torch.Tensor]] = None
     epochs_since_improvement = 0
+    steps = 0
     t0 = time.time()
 
     for epoch in range(epochs):
@@ -185,6 +197,7 @@ def train_classifier(
             if grad_clip:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             opt.step()
+            steps += 1
             total_loss += loss.item() * labels.size(0)
             n += labels.size(0)
         train_loss = total_loss / n if n else 0.0
@@ -203,6 +216,7 @@ def train_classifier(
             }
         )
         result.epochs_run = epoch + 1
+        result.steps = steps
 
         if val_acc > result.best_val_acc:
             result.best_val_acc = val_acc
@@ -219,7 +233,11 @@ def train_classifier(
                 flush=True,
             )
 
-        if early_stopping_patience is not None and epochs_since_improvement >= early_stopping_patience:
+        if (
+            early_stopping_patience is not None
+            and epochs_since_improvement >= early_stopping_patience
+            and steps >= min_steps
+        ):
             result.stopped_early = True
             break
 
