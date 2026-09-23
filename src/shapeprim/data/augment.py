@@ -57,6 +57,13 @@ class AugmentConfig:
     hflip_prob: float = 0.0
     brightness: float = 0.0
     contrast: float = 0.0
+    saturation: float = 0.0
+    hue: float = 0.0  # torchvision ColorJitter hue, at most 0.5
+    # torchvision RandomPerspective distortion scale (0 = off), applied with
+    # probability ``perspective_prob``. The pixel-side counterpart of Phase
+    # 2's viewing-angle transform.
+    perspective: float = 0.0
+    perspective_prob: float = 0.5
 
     def __post_init__(self) -> None:
         self.scale_range = tuple(self.scale_range)
@@ -90,6 +97,9 @@ class AugmentConfig:
             and self.hflip_prob == 0.0
             and self.brightness == 0.0
             and self.contrast == 0.0
+            and self.perspective == 0.0
+            and self.saturation == 0.0
+            and self.hue == 0.0
         )
 
     @classmethod
@@ -115,6 +125,10 @@ class AugmentConfig:
             "hflip_prob": self.hflip_prob,
             "brightness": self.brightness,
             "contrast": self.contrast,
+            "saturation": self.saturation,
+            "hue": self.hue,
+            "perspective": self.perspective,
+            "perspective_prob": self.perspective_prob,
         }
 
 
@@ -151,8 +165,20 @@ def build_transform(cfg: AugmentConfig, background: Sequence[int] = (255, 255, 2
             )
         )
 
-    if cfg.brightness > 0 or cfg.contrast > 0:
-        ops.append(transforms.ColorJitter(brightness=cfg.brightness, contrast=cfg.contrast))
+    if cfg.perspective > 0:
+        ops.append(
+            transforms.RandomPerspective(
+                distortion_scale=cfg.perspective, p=cfg.perspective_prob, fill=fill,
+                interpolation=transforms.InterpolationMode.BILINEAR,
+            )
+        )
+
+    if cfg.brightness > 0 or cfg.contrast > 0 or cfg.saturation > 0 or cfg.hue > 0:
+        ops.append(
+            transforms.ColorJitter(
+                brightness=cfg.brightness, contrast=cfg.contrast, saturation=cfg.saturation, hue=cfg.hue
+            )
+        )
 
     return transforms.Compose(ops) if ops else None
 
@@ -168,6 +194,27 @@ PRESETS = {
     # For the position/scale-shift experiments (WP1/E3): augmentation wide
     # enough to cover the shifted test condition.
     "strong": AugmentConfig(enabled=True, translate=0.30, scale_range=(0.6, 1.5)),
+    # Phase 2: viewpoint-matched augmentation -- shear, squash (via scale
+    # and shear) and a random perspective warp. It knows the *kind* of
+    # shift a viewpoint test applies, which is exactly what a practitioner
+    # who expected viewpoint change would add; it is reported next to the
+    # plain CNN so the reader can see which gaps it closes.
+    "view": AugmentConfig(
+        enabled=True, translate=0.15, scale_range=(0.8, 1.2), shear=15.0, perspective=0.5, perspective_prob=0.7
+    ),
+    "view_rot": AugmentConfig(
+        enabled=True, translate=0.15, scale_range=(0.8, 1.2), shear=15.0, perspective=0.5,
+        perspective_prob=0.7, degrees=45.0,
+    ),
+    # Phase 3a: colour-matched augmentation (brightness, contrast,
+    # saturation and the full hue circle) on top of the standard affine.
+    # It is what a practitioner expecting colour change would add, and it
+    # is the pixel-side counterpart of training the extractor on
+    # randomised appearance.
+    "appearance": AugmentConfig(
+        enabled=True, translate=0.15, scale_range=(0.8, 1.2), brightness=0.4, contrast=0.4,
+        saturation=0.6, hue=0.5,
+    ),
     # Opt-in rotation, capped below the tree/arrow_sign ambiguity point.
     "standard_rot": AugmentConfig(enabled=True, translate=0.15, scale_range=(0.8, 1.2), degrees=30.0),
 }

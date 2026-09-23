@@ -22,17 +22,21 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from ..data.primitives import PRIMITIVE_TYPES, Primitive
+from ..data.primitives import CANONICAL_TYPE, CANONICAL_TYPES, Primitive
 
-NUM_NODE_FEATURES = len(PRIMITIVE_TYPES) + 1 + 1 + 2 + 2  # type + size + aspect + rot(sin,cos) + pos(x,y)
-NUM_TYPES = len(PRIMITIVE_TYPES)
+# One-hot over the four canonical slots (circle/ellipse, triangle,
+# rectangle/quadrilateral, line). Phase 1's four types map one-to-one onto
+# these slots in their original order, so Phase 1 graphs are unchanged.
+NUM_NODE_FEATURES = len(CANONICAL_TYPES) + 1 + 1 + 2 + 2  # type + size + aspect + rot(sin,cos) + pos(x,y)
+NUM_TYPES = len(CANONICAL_TYPES)
 # Column positions inside a node feature vector, for models that read
 # individual features (the bag ablation reads size and aspect only).
 SIZE_INDEX = NUM_TYPES
 ASPECT_INDEX = NUM_TYPES + 1
 NUM_EDGE_FEATURES = 11  # dx, dy, distance, size_ratio, sin(angle), cos(angle), above, below, left, right, inside
 
-_TYPE_INDEX = {t: i for i, t in enumerate(PRIMITIVE_TYPES)}
+_TYPE_INDEX = {t: CANONICAL_TYPES.index(c) for t, c in CANONICAL_TYPE.items()}
+FRAMES = ("bbox", "affine")
 _EPS = 1e-6
 
 
@@ -63,7 +67,7 @@ def _object_frame(primitives: List[Primitive]) -> Tuple[float, float, float]:
 
 
 def _node_feature_vector(p: Primitive, cx: float, cy: float, scale: float) -> np.ndarray:
-    type_onehot = np.zeros(len(PRIMITIVE_TYPES), dtype=np.float32)
+    type_onehot = np.zeros(NUM_TYPES, dtype=np.float32)
     type_onehot[_TYPE_INDEX[p.type]] = 1.0
 
     size = math.sqrt(max(p.width * p.height, 0.0)) / scale
@@ -109,7 +113,42 @@ def _is_inside(inner: Primitive, outer: Primitive, containment_threshold: float 
     return (inter_area / inner_area) >= containment_threshold
 
 
-def build_graph(primitives: List[Primitive], label: Optional[str] = None) -> ShapeGraph:
+def affine_canonical(primitives: List[Primitive]) -> List[Primitive]:
+    """Whiten the object: map it so its second-moment matrix is the identity.
+
+    The "built-in invariance" option of PLAN.md section 6. The object's
+    covariance is taken over the union of its primitives' outlines (points
+    weighted by the outline sampling, which is dense and uniform enough
+    for a frame estimate) and the map is its symmetric inverse square
+    root. If the object is transformed by any affine map A, the whitened
+    result differs from the untransformed one by a rotation only
+    (W' A = R W for some orthogonal R), so shear and anisotropic scale --
+    and, to first order, perspective foreshortening -- are removed, while
+    in-plane orientation is kept. Keeping orientation is deliberate: a
+    fully rotation-canonical frame would map tree onto arrow_sign.
+    """
+    from ..data.transforms import all_points, transform_primitive
+
+    pts = all_points(primitives)
+    if len(pts) < 3:
+        return primitives
+    mu = pts.mean(axis=0)
+    cov = np.cov((pts - mu).T)
+    evals, evecs = np.linalg.eigh(cov)
+    evals = np.maximum(evals, 1e-6 * max(evals.max(), 1e-6))
+    w = evecs @ np.diag(evals ** -0.5) @ evecs.T
+
+    def whiten(p: np.ndarray) -> np.ndarray:
+        return (p - mu) @ w.T
+
+    return [transform_primitive(p, whiten) for p in primitives]
+
+
+def build_graph(primitives: List[Primitive], label: Optional[str] = None, frame: str = "bbox") -> ShapeGraph:
+    if frame not in FRAMES:
+        raise ValueError(f"unknown frame {frame!r}; known: {FRAMES}")
+    if frame == "affine" and primitives:
+        primitives = affine_canonical(primitives)
     if not primitives:
         return ShapeGraph(
             node_features=np.zeros((0, NUM_NODE_FEATURES), dtype=np.float32),

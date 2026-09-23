@@ -14,7 +14,20 @@ results/**/*.json
 # training history per run and regenerate from the config.
 !results/*/*/summary.json
 !results/*/*/*.png
+# Per-run records are committed too: the container running the sweeps can
+# be reclaimed at any time, and --resume skips every run whose metrics.json
+# is already in the repository.
+!results/*/*/*/
+!results/*/*/*/metrics.json
+!results/*/*/*/config.json
+# The trained detectors (~1 MB) and the SAM-fit cache (small JSON per image)
+# each cost CPU-hours to regenerate.
+!results/phase3/samfit_cache/
+!results/phase3/samfit_cache/*.json
 !results/.gitkeep
 *.pt
 *.pth
 .DS_Store
+# (after the *.pt rule above, so it wins)
+!results/*/learned_extractor*/*.pt
+logs/

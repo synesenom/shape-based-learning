@@ -233,3 +233,108 @@ class ClassicalExtractor(PrimitiveExtractor):
 def _elongation(width: float, height: float) -> float:
     lo = max(min(width, height), 1e-6)
     return max(width, height) / lo
+
+
+def _offset_convex_polygon(verts: np.ndarray, distance: float) -> np.ndarray:
+    """Move every edge of a convex polygon outward by ``distance``.
+
+    Each new vertex is the intersection of its two neighbouring offset
+    edges. This is the vertex-exact version of the size-recovery pad: the
+    white outline shrinks every edge inward by about the same amount, so
+    growing each edge back (rather than scaling about the centroid) keeps
+    a skewed quadrilateral's shape.
+    """
+    v = verts.astype(float)
+    n = len(v)
+    area2 = sum(v[i][0] * v[(i + 1) % n][1] - v[(i + 1) % n][0] * v[i][1] for i in range(n))
+    sign = 1.0 if area2 > 0 else -1.0
+    lines = []
+    for i in range(n):
+        a, b = v[i], v[(i + 1) % n]
+        d = b - a
+        length = np.linalg.norm(d)
+        if length < 1e-9:
+            return v
+        normal = sign * np.array([d[1], -d[0]]) / length  # outward
+        lines.append((a + normal * distance, d))
+    out = []
+    for i in range(n):
+        (p1, d1), (p2, d2) = lines[i - 1], lines[i]
+        m = np.array([d1, -d2]).T
+        if abs(np.linalg.det(m)) < 1e-9:
+            out.append(v[i])
+            continue
+        t = np.linalg.solve(m, p2 - p1)
+        out.append(p1 + t[0] * d1)
+    return np.array(out)
+
+
+class ClassicalExtractorV2(ClassicalExtractor):
+    """Classical extraction for Phase 2's vocabulary (ellipse/quad/triangle/line).
+
+    Same segmentation as ``ClassicalExtractor`` (threshold against the
+    background, one connected component per primitive), different fitting:
+
+    - round blobs become rotated **ellipses** from ``cv2.fitEllipse``
+      instead of axis-aligned circles;
+    - 4-vertex blobs keep their exact (outline-compensated) vertices as a
+      **quadrilateral** or **line**, so a rectangle seen in perspective is
+      reported as the quadrilateral it is, not its min-area box;
+    - triangles keep their vertices, apex first (the vertex whose adjacent
+      edges are most nearly equal -- exact for the isosceles templates at
+      a frontal view, a heuristic under perspective).
+
+    Kept separate from the Phase 1 extractor (and cached under a different
+    name) so Phase 1 numbers stay reproducible.
+    """
+
+    name = "classical_v2"
+
+    def _classify_contour(self, contour: np.ndarray, arr: np.ndarray, comp_mask: np.ndarray) -> Optional[Primitive]:
+        area = cv2.contourArea(contour)
+        if area <= 0:
+            return None
+        color = self._sample_color(comp_mask, arr)
+        hull = cv2.convexHull(contour)
+        hull_area = cv2.contourArea(hull)
+        solidity = area / hull_area if hull_area > 0 else 0.0
+
+        if solidity >= self.min_solidity and len(contour) >= 5:
+            score = self._ellipse_fit_score(contour, area)
+            if score is not None and score <= self.ellipse_fit_tolerance:
+                (cx, cy), (d1, d2), angle = cv2.fitEllipse(contour)
+                pad = _size_recovery_pad(d1, d2)
+                return Primitive(
+                    type="ellipse", cx=float(cx), cy=float(cy), width=float(d1 + pad),
+                    height=float(d2 + pad), rotation=math.radians(angle), color=color,
+                )
+
+        perimeter = cv2.arcLength(contour, True)
+        approx = self._approx_polygon(contour, perimeter)
+        if len(approx) == 3:
+            v = approx.astype(float)
+            edge = [np.linalg.norm(v[i] - v[(i + 1) % 3]) for i in range(3)]
+            apex = int(np.argmin([abs(edge[i - 1] - edge[i]) for i in range(3)]))
+            v = np.roll(v, -apex, axis=0)
+            pad = _size_recovery_pad(*self._rect_params(cv2.boxPoints(cv2.minAreaRect(contour)))[2:4])
+            v = _offset_convex_polygon(v, pad / 2)
+            return self._polygon("triangle", v, color)
+        if len(approx) == 4 and cv2.isContourConvex(approx.reshape(-1, 1, 2).astype(np.int32)):
+            v = approx.astype(float)
+        else:
+            v = cv2.boxPoints(cv2.minAreaRect(contour)).astype(float)
+        _, _, w, h, _ = self._rect_params(v)
+        v = _offset_convex_polygon(v, _size_recovery_pad(w, h) / 2)
+        _, _, w, h, _ = self._rect_params(v)
+        ptype = "line" if _elongation(w, h) > self.line_aspect_ratio else "quadrilateral"
+        return self._polygon(ptype, v, color)
+
+    @staticmethod
+    def _polygon(ptype: str, v: np.ndarray, color) -> Primitive:
+        from ..data.primitives import polygon_pose
+
+        cx, cy, w, h, rot = polygon_pose(ptype, v)
+        return Primitive(
+            type=ptype, cx=cx, cy=cy, width=w, height=h, rotation=rot, color=color,
+            vertices=[(float(x), float(y)) for x, y in v],
+        )

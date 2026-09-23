@@ -99,6 +99,17 @@ def accuracy_on_classes(
     return correct / total if total else 0.0
 
 
+@torch.no_grad()
+def predictions(model: torch.nn.Module, forward_fn: ForwardFn, loader: DataLoader, device: str = "cpu") -> List[int]:
+    """Predicted class index per test sample, in dataset order (loader must not shuffle)."""
+    model.eval()
+    out: List[int] = []
+    for batch in loader:
+        logits, _ = forward_fn(model, batch, device)
+        out += logits.argmax(dim=-1).tolist()
+    return out
+
+
 def evaluate_extractor(
     dataset,
     iou_threshold: float = 0.5,

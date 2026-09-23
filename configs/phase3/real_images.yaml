@@ -1,0 +1,53 @@
+# Phase 3c: real photographs (PLAN.md section 7).
+#
+# Four classes shared by COCO and Geirhos's model-vs-human sets: bicycle,
+# car, truck, cat. Train on COCO crops (train2017), test on COCO crops
+# (val2017), and on the model-vs-human sketch, stylized, edge, silhouette
+# and cue-conflict images of the same classes (cue-conflict restricted to
+# images whose texture class is also one of the four; scored on shape).
+#
+# Primitives come from SAM masks fitted with ellipse / rectangle / triangle
+# (extract/sam_fit.py; SlimSAM-77, a pruned SAM, for CPU cost). There is no
+# primitive ground truth for photos, so extractor F1 is not measurable
+# and is not computed (extractor_eval_samples: 0).
+#
+# Caveat that must travel with the ImageNet-pretrained rows: ImageNet
+# contains these object categories, and the model-vs-human images are
+# derived from ImageNet classes. The pretrained probe/fine-tune are the
+# practitioner's baseline, not a clean few-shot learner.
+phase: phase3
+experiment: real_images
+
+source: coco
+classes: [bicycle, car, truck, cat_face]
+image_size: 128
+n_val_per_class: 30
+n_test_per_class: 60
+sweep:
+  n_train_per_class: [10, 100]
+epochs: 40
+seeds: [0, 1, 2]
+test_seed: 12345
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 0
+
+shift:
+  name: real_ood
+  tests:
+    ood_sketch: {source: mvh_sketch}
+    ood_stylized: {source: mvh_stylized}
+    ood_edge: {source: mvh_edge}
+    ood_silhouette: {source: mvh_silhouette}
+    ood_cue_conflict: {source: mvh_cue}
+
+models:
+  - {name: cnn, kind: cnn, augment: none}
+  - {name: cnn_aug, kind: cnn, augment: standard}
+  - {name: cnn_probe, kind: cnn, model_config: cnn_probe, augment: none}
+  - {name: cnn_pretrained, kind: cnn, model_config: cnn_pretrained, augment: standard}
+  - {name: gnn_samfit, kind: gnn, extractor: samfit}
+  - {name: st_samfit, kind: settransformer, extractor: samfit}
+  - {name: bag_samfit, kind: bag, extractor: samfit}
