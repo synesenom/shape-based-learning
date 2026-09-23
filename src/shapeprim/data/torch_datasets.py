@@ -35,7 +35,7 @@ from ..graph.build import NUM_EDGE_FEATURES, NUM_NODE_FEATURES, ShapeGraph, buil
 from .augment import AugmentConfig, build_transform, resolve_augment
 from .objects import CLASS_NAMES, DATASET_VERSION
 from .primitives import Primitive
-from .synth_dataset import GenerationConfig, SynthShapeDataset
+from .synth_dataset import GenerationConfig, SynthShapeDataset, make_source
 
 # Label indices for the full 10-class vocabulary. Kept as a module-level
 # convenience, but datasets index against *their own* class list: a
@@ -158,7 +158,7 @@ class ImageClassificationDataset(Dataset):
         split: str = "",
         augment=None,
     ):
-        self.inner = SynthShapeDataset(classes=classes, n_per_class=n_per_class, cfg=cfg, seed=seed, split=split)
+        self.inner = make_source(classes, n_per_class, cfg or GenerationConfig(), seed=seed, split=split)
         self.class_to_idx = class_to_idx(self.inner.classes)
         self.augment_cfg: AugmentConfig = resolve_augment(augment)
         self.transform = build_transform(self.augment_cfg, background=self.inner.cfg.background)
@@ -190,7 +190,7 @@ class GraphClassificationDataset(Dataset):
         cache_dir: Optional[str | Path] = None,
         frame: str = "bbox",
     ):
-        self.inner = SynthShapeDataset(classes=classes, n_per_class=n_per_class, cfg=cfg, seed=seed, split=split)
+        self.inner = make_source(classes, n_per_class, cfg or GenerationConfig(), seed=seed, split=split)
         self.class_to_idx = class_to_idx(self.inner.classes)
         self.extractor = extractor
         # Graph coordinate frame (graph/build.py): "bbox" or "affine". Not

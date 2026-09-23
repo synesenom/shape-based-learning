@@ -1,0 +1,36 @@
+# Phase 3b: QuickDraw sketches, few-shot (PLAN.md section 7).
+#
+# Ten QuickDraw classes that decompose into primitives. The graph models'
+# primitives come from stroke fitting (extract/strokes.py; the "oracle"
+# extractor here returns the stroke fit -- there is no human primitive
+# annotation, so the extractor F1 printed for these runs is 1.0 by
+# definition and meaningless; the fitter's F1 on synthetic sketches with
+# known ground truth is reported separately in
+# results/phase3/strokefit_proxy/).
+phase: phase3
+experiment: quickdraw_fewshot
+
+source: quickdraw
+classes: [bicycle, car, truck, cat_face, house, tree, fish, snowman, sun, face]
+image_size: 64
+n_val_per_class: 40
+n_test_per_class: 200
+sweep:
+  n_train_per_class: [5, 10, 25, 100, 500]
+epochs: 60
+epochs_by_n: {500: 25}
+seeds: [0, 1, 2]
+test_seed: 12345
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 50
+
+models:
+  - {name: cnn, kind: cnn, augment: none}
+  - {name: cnn_aug, kind: cnn, augment: standard}
+  - {name: cnn_probe, kind: cnn, model_config: cnn_probe, augment: none}
+  - {name: gnn_strokefit, kind: gnn, extractor: oracle}
+  - {name: st_strokefit, kind: settransformer, extractor: oracle}
+  - {name: bag_strokefit, kind: bag, extractor: oracle}

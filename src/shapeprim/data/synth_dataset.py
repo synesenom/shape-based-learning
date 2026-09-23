@@ -66,6 +66,11 @@ class GenerationConfig:
     occlusion_range: Tuple[float, float] = (0.0, 0.0)
     noise_std: float = 0.0
     blur_radius: float = 0.0
+    # Phase 3b: draw primitives as outlines only (a sketch-like rendering of
+    # the same ground truth), and the data source: "synthetic" or
+    # "quickdraw" (data/real.py).
+    outline_only: bool = False
+    source: str = "synthetic"
 
     @property
     def appearance_enabled(self) -> bool:
@@ -199,6 +204,11 @@ def render_sample(
             background=cfg.background, clutter=cfg.clutter, occlusion_range=cfg.occlusion_range,
             noise_std=cfg.noise_std, blur_radius=cfg.blur_radius,
         )
+    elif cfg.outline_only:
+        image = Image.new("RGB", (size, size), cfg.background)
+        draw = ImageDraw.Draw(image)
+        for p in draw_order:
+            draw.polygon(p.boundary_points(), outline=instance_color, width=max(1, round(size / 32)))
     else:
         image = Image.new("RGB", (size, size), cfg.background)
         draw = ImageDraw.Draw(image)
@@ -329,3 +339,14 @@ def generate_dataset(
         writer.writerows(manifest_rows)
 
     return split_dir
+
+
+def make_source(classes, n_per_class: int, cfg: "GenerationConfig", seed: int = 0, split: str = ""):
+    """The dataset ``cfg.source`` names, with the SynthShapeDataset interface."""
+    if cfg.source == "synthetic":
+        return SynthShapeDataset(classes=classes, n_per_class=n_per_class, cfg=cfg, seed=seed, split=split)
+    if cfg.source == "quickdraw":
+        from .real import QuickDrawDataset
+
+        return QuickDrawDataset(classes, n_per_class, cfg, seed=seed, split=split or "train")
+    raise ValueError(f"unknown source {cfg.source!r}; known: synthetic, quickdraw")

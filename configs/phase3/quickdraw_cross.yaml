@@ -1,0 +1,39 @@
+# Phase 3b cross-domain: train on synthetic drawings, test on QuickDraw
+# (PLAN.md section 7). The eight classes both domains share.
+#
+# Synthetic training images are rendered as outlines (outline_only), the
+# sketch-like rendering of the same ground truth, at viewing angles 0-30
+# for some pose variety; the graph models train on their ground-truth
+# primitives and are tested on QuickDraw stroke fits. The in-distribution
+# (synthetic) test accuracy is reported alongside, as for every shift.
+phase: phase3
+experiment: quickdraw_cross
+
+classes: [bicycle, car, truck, cat_face, house, tree, fish, snowman]
+image_size: 64
+n_train_per_class: 150
+n_val_per_class: 40
+n_test_per_class: 200
+view_angle_range: [0, 30]
+outline_only: true
+epochs: 40
+seeds: [0, 1, 2]
+test_seed: 12345
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 50
+
+shift:
+  name: synthetic_to_quickdraw
+  test: {source: quickdraw}
+
+models:
+  - {name: cnn, kind: cnn, augment: none}
+  - {name: cnn_aug, kind: cnn, augment: view}
+  - {name: cnn_probe, kind: cnn, model_config: cnn_probe, augment: none}
+  - {name: gnn_oracle, kind: gnn, extractor: oracle}
+  - {name: gnn_oracle_affine, kind: gnn, extractor: oracle, graph_frame: affine}
+  - {name: st_oracle, kind: settransformer, extractor: oracle}
+  - {name: bag_oracle, kind: bag, extractor: oracle}
