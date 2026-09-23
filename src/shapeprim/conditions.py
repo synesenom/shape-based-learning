@@ -64,10 +64,19 @@ class Condition:
     in-distribution and ``is_shift`` is False.
     """
 
-    def __init__(self, name: str, train_cfg: GenerationConfig, test_cfg: GenerationConfig):
+    def __init__(
+        self,
+        name: str,
+        train_cfg: GenerationConfig,
+        test_cfg: GenerationConfig,
+        extra_tests: Optional[Dict[str, GenerationConfig]] = None,
+    ):
         self.name = name
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+        # Further named test distributions, each evaluated once per run
+        # (e.g. one per viewing-angle bin for an accuracy-vs-angle curve).
+        self.extra_tests: Dict[str, GenerationConfig] = dict(extra_tests or {})
 
     @property
     def is_shift(self) -> bool:
@@ -79,6 +88,12 @@ class Condition:
             train, test = asdict(self.train_cfg), asdict(self.test_cfg)
             out["changed"] = {
                 k: {"train": train[k], "test": test[k]} for k in train if train[k] != test[k]
+            }
+        if self.extra_tests:
+            train = asdict(self.train_cfg)
+            out["extra_tests"] = {
+                name: {k: v for k, v in asdict(c).items() if v != train[k]}
+                for name, c in self.extra_tests.items()
             }
         return out
 
@@ -101,9 +116,10 @@ def resolve_condition(cfg: Dict[str, Any]) -> Condition:
     name = shift.get("name", "shift")
     train_cfg = _apply(base, shift.get("train"))
     test_cfg = _apply(base, shift.get("test"))
-    if asdict(train_cfg) == asdict(test_cfg):
+    extra = {k: _apply(base, v) for k, v in (shift.get("tests") or {}).items()}
+    if asdict(train_cfg) == asdict(test_cfg) and not extra:
         raise ValueError(
             f"shift {name!r} leaves the train and test distributions identical; "
             "either give it real overrides or drop the shift block"
         )
-    return Condition(name, train_cfg, test_cfg)
+    return Condition(name, train_cfg, test_cfg, extra)

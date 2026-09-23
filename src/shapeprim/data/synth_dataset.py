@@ -20,12 +20,14 @@ import random
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 from PIL import Image, ImageDraw
 
 from .objects import CLASS_NAMES, CLASS_TEMPLATES, NOVEL_VARIANTS, ClassTemplate
 from .primitives import PRIMITIVE_TYPES, Primitive
+from .textures import render_styled
+from .transforms import ViewSample, apply_view, sample_view
 
 DEFAULT_COLOR = (40, 40, 40)
 BACKGROUND = (255, 255, 255)
@@ -47,12 +49,55 @@ class GenerationConfig:
     # training) or "novel" (the held-out composition variants in
     # objects.NOVEL_VARIANTS, used for the novel-composition test).
     template_set: str = "base"
+    # Phase 2 viewpoint (data/transforms.py). Ranges are magnitudes in
+    # degrees (rotation, view angle) or plain numbers (shear, squash); all
+    # default to the identity, and no random number is drawn for them
+    # unless one is enabled, so Phase 1 data is unchanged bit for bit.
+    rotation_range: Tuple[float, float] = (0.0, 0.0)
+    shear_range: Tuple[float, float] = (0.0, 0.0)
+    squash_range: Tuple[float, float] = (1.0, 1.0)
+    view_angle_range: Tuple[float, float] = (0.0, 0.0)
+    camera_distance: float = 2.5
+    # Phase 3a appearance (data/textures.py). All off by default; no random
+    # number is drawn for them unless one is enabled.
+    texture: Any = "flat"  # "flat" or a list of noise/stripes/dots/photo
+    palette: str = "default"  # default | seen | unseen
+    clutter: bool = False
+    occlusion_range: Tuple[float, float] = (0.0, 0.0)
+    noise_std: float = 0.0
+    blur_radius: float = 0.0
+    # Phase 3b: draw primitives as outlines only (a sketch-like rendering of
+    # the same ground truth), and the data source: "synthetic" or
+    # "quickdraw" (data/real.py).
+    outline_only: bool = False
+    source: str = "synthetic"
+
+    @property
+    def appearance_enabled(self) -> bool:
+        return (
+            self.texture != "flat"
+            or self.palette != "default"
+            or self.clutter
+            or tuple(self.occlusion_range) != (0.0, 0.0)
+            or self.noise_std > 0
+            or self.blur_radius > 0
+        )
+
+    @property
+    def view_enabled(self) -> bool:
+        return (
+            tuple(self.rotation_range) != (0.0, 0.0)
+            or tuple(self.shear_range) != (0.0, 0.0)
+            or tuple(self.squash_range) != (1.0, 1.0)
+            or tuple(self.view_angle_range) != (0.0, 0.0)
+        )
 
     @classmethod
     def from_dict(cls, d: dict) -> "GenerationConfig":
         d = dict(d)
-        if "object_scale_range" in d:
-            d["object_scale_range"] = tuple(d["object_scale_range"])
+        for key in ("object_scale_range", "rotation_range", "shear_range", "squash_range", "view_angle_range", "occlusion_range"):
+            if key in d:
+                d[key] = tuple(float(v) for v in d[key])
         if "color" in d:
             d["color"] = tuple(d["color"])
         if "background" in d:
@@ -66,6 +111,7 @@ class Sample:
     image: Image.Image
     primitives: List[Primitive]
     label: str
+    view: Optional[ViewSample] = None
 
 
 def _stable_seed(*parts) -> int:
@@ -143,14 +189,33 @@ def render_sample(
             d = _random_distractor(size, rng, cfg)
             (front if rng.random() < 0.5 else behind).append(d)
 
+    view = None
+    if cfg.view_enabled:
+        view = sample_view(
+            rng, cfg.rotation_range, cfg.shear_range, cfg.squash_range, cfg.view_angle_range
+        )
+        primitives = apply_view(primitives, view, (cx, cy), obj_size, size, cfg.camera_distance)
+
     draw_order = behind + primitives + front
 
-    image = Image.new("RGB", (size, size), cfg.background)
-    draw = ImageDraw.Draw(image)
-    for p in draw_order:
-        p.draw(draw)
+    if cfg.appearance_enabled:
+        image = render_styled(
+            draw_order, size, rng, texture=cfg.texture, palette=cfg.palette, base_color=instance_color,
+            background=cfg.background, clutter=cfg.clutter, occlusion_range=cfg.occlusion_range,
+            noise_std=cfg.noise_std, blur_radius=cfg.blur_radius,
+        )
+    elif cfg.outline_only:
+        image = Image.new("RGB", (size, size), cfg.background)
+        draw = ImageDraw.Draw(image)
+        for p in draw_order:
+            draw.polygon(p.boundary_points(), outline=instance_color, width=max(1, round(size / 32)))
+    else:
+        image = Image.new("RGB", (size, size), cfg.background)
+        draw = ImageDraw.Draw(image)
+        for p in draw_order:
+            p.draw(draw)
 
-    return Sample(image=image, primitives=draw_order, label=class_name)
+    return Sample(image=image, primitives=draw_order, label=class_name, view=view)
 
 
 def _random_distractor(size: int, rng: random.Random, cfg: GenerationConfig) -> Primitive:
@@ -274,3 +339,23 @@ def generate_dataset(
         writer.writerows(manifest_rows)
 
     return split_dir
+
+
+def make_source(classes, n_per_class: int, cfg: "GenerationConfig", seed: int = 0, split: str = ""):
+    """The dataset ``cfg.source`` names, with the SynthShapeDataset interface."""
+    if cfg.source == "synthetic":
+        return SynthShapeDataset(classes=classes, n_per_class=n_per_class, cfg=cfg, seed=seed, split=split)
+    if cfg.source == "quickdraw":
+        from .real import QuickDrawDataset
+
+        return QuickDrawDataset(classes, n_per_class, cfg, seed=seed, split=split or "train")
+    if cfg.source == "coco":
+        from .real import CocoCropDataset
+
+        return CocoCropDataset(classes, n_per_class, cfg, seed=seed, split=split or "train")
+    if cfg.source.startswith("mvh_"):
+        # Test-only sets: every image of the requested classes, whatever n is.
+        from .real import MvhDataset
+
+        return MvhDataset(cfg.source[len("mvh_"):], classes, cfg)
+    raise ValueError(f"unknown source {cfg.source!r}; known: synthetic, quickdraw, coco, mvh_<kind>")

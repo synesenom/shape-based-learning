@@ -1,0 +1,279 @@
+{
+  "model": "cnn",
+  "kind": "cnn",
+  "seed": 0,
+  "n_train_per_class": 150,
+  "test_acc": 0.898,
+  "test_acc_indist": 1.0,
+  "shift_drop": 0.10199999999999998,
+  "condition": {
+    "name": "novel_composition",
+    "is_shift": true,
+    "changed": {
+      "template_set": {
+        "train": "base",
+        "test": "novel"
+      }
+    }
+  },
+  "best_val_acc": 1.0,
+  "best_epoch": 4,
+  "epochs_run": 13,
+  "stopped_early": true,
+  "train_seconds": 235.62413835525513,
+  "n_parameters": 11173962,
+  "twin_test_acc": 0.65,
+  "per_class_acc": {
+    "bicycle": 1.0,
+    "car": 0.99,
+    "truck": 1.0,
+    "cat_face": 0.75,
+    "house": 0.97,
+    "tree": 0.32,
+    "arrow_sign": 0.98,
+    "snowman": 1.0,
+    "person": 0.97,
+    "fish": 1.0
+  },
+  "confusion": {
+    "bicycle": {
+      "bicycle": 100,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "car": {
+      "bicycle": 0,
+      "car": 99,
+      "truck": 1,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "truck": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 100,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "cat_face": {
+      "bicycle": 0,
+      "car": 13,
+      "truck": 0,
+      "cat_face": 75,
+      "house": 12,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "house": {
+      "bicycle": 0,
+      "car": 3,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 97,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "tree": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 32,
+      "arrow_sign": 0,
+      "snowman": 68,
+      "person": 0,
+      "fish": 0
+    },
+    "arrow_sign": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 98,
+      "snowman": 2,
+      "person": 0,
+      "fish": 0
+    },
+    "snowman": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 100,
+      "person": 0,
+      "fish": 0
+    },
+    "person": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 3,
+      "person": 97,
+      "fish": 0
+    },
+    "fish": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 100
+    }
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.5999635557134946,
+      "val_loss": 1.7655381230358034,
+      "val_acc": 0.4475,
+      "lr": 0.0003333333333333333
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.0673816202878952,
+      "val_loss": 1.0513961219896737,
+      "val_acc": 0.6775,
+      "lr": 0.0006666666666666666
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.12198025210698446,
+      "val_loss": 1.8522740223345318,
+      "val_acc": 0.5,
+      "lr": 0.001
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.03318669698697825,
+      "val_loss": 0.022909076027572153,
+      "val_acc": 0.9975,
+      "lr": 0.0009968875438971553
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.006576563216124972,
+      "val_loss": 0.001976644543465227,
+      "val_acc": 1.0,
+      "lr": 0.0009875893165300026
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0015170284174382688,
+      "val_loss": 0.0008709312253631651,
+      "val_acc": 1.0,
+      "lr": 0.000972222248502642
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.0007460126429020117,
+      "val_loss": 0.0003306152339791879,
+      "val_acc": 1.0,
+      "lr": 0.0009509795896116974
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0011897101734842485,
+      "val_loss": 0.0009270168741932139,
+      "val_acc": 1.0,
+      "lr": 0.0009241284786180007
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.0005563242989592254,
+      "val_loss": 0.00014138457539957015,
+      "val_acc": 1.0,
+      "lr": 0.0008920065838216749
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.00038087275340997924,
+      "val_loss": 0.00010376065700256731,
+      "val_acc": 1.0,
+      "lr": 0.000855017856687341
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.00029459022893570363,
+      "val_loss": 0.00011103813434601762,
+      "val_acc": 1.0,
+      "lr": 0.0008136274519200731
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.000366497268085368,
+      "val_loss": 9.112751853535883e-05,
+      "val_acc": 1.0,
+      "lr": 0.0007683558778750916
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.00033207064929107827,
+      "val_loss": 9.917728850268759e-05,
+      "val_acc": 1.0,
+      "lr": 0.0007197724508631912
+    }
+  ],
+  "augment": {
+    "enabled": false,
+    "translate": 0.0,
+    "scale_range": [
+      1.0,
+      1.0
+    ],
+    "degrees": 0.0,
+    "shear": 0.0,
+    "hflip_prob": 0.0,
+    "brightness": 0.0,
+    "contrast": 0.0
+  },
+  "train_params": {
+    "epochs": 30,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "optimizer": "adam",
+    "momentum": 0.9,
+    "schedule": "cosine",
+    "warmup_epochs": 2,
+    "min_lr_fraction": 0.01,
+    "early_stopping_patience": 8,
+    "grad_clip": 5.0
+  },
+  "device": "cpu"
+}

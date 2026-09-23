@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import List, Tuple, TypedDict
 
+import math
+
 import cv2
 import numpy as np
 
@@ -16,10 +18,10 @@ from ..data.primitives import Primitive
 
 def primitive_mask(p: Primitive, size: int) -> np.ndarray:
     mask = np.zeros((size, size), dtype=np.uint8)
-    if p.type == "circle":
+    if p.canonical_type == "ellipse":
         center = (int(round(p.cx)), int(round(p.cy)))
         axes = (max(1, int(round(p.width / 2))), max(1, int(round(p.height / 2))))
-        cv2.ellipse(mask, center, axes, 0, 0, 360, 255, -1)
+        cv2.ellipse(mask, center, axes, math.degrees(p.rotation), 0, 360, 255, -1)
     else:
         pts = np.array(p.polygon(), dtype=np.int32).reshape(-1, 1, 2)
         cv2.fillPoly(mask, [pts], 255)
@@ -50,11 +52,16 @@ def match_primitives(
     size: int,
     iou_threshold: float = 0.5,
 ) -> MatchResult:
-    """Greedy same-type IoU matching (highest IoU first, each side used once)."""
+    """Greedy same-type IoU matching (highest IoU first, each side used once).
+
+    Types are compared canonically (circle == ellipse, rectangle ==
+    quadrilateral): a Phase 2 extractor that reports a round ellipse for a
+    Phase 1 circle has found the right primitive.
+    """
     candidates = []
     for i, pp in enumerate(pred):
         for j, gp in enumerate(gt):
-            if pp.type != gp.type:
+            if pp.canonical_type != gp.canonical_type:
                 continue
             val = iou(pp, gp, size)
             if val >= iou_threshold:
