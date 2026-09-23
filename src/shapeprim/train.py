@@ -101,6 +101,38 @@ def evaluate_loss_and_accuracy(
     return loss_sum / total, correct / total
 
 
+@torch.no_grad()
+def recalibrate_batchnorm(model: torch.nn.Module, forward_fn: ForwardFn, loader: DataLoader, device: str) -> bool:
+    """Re-estimate trainable BatchNorm statistics with one pass over ``loader``.
+
+    "Precise BN" (Wu & Johnson 2021, "Rethinking 'Batch' in BatchNorm").
+    Running averages with momentum 0.1 lag behind weights that are still
+    moving, and under augmentation the lag made a from-scratch ResNet's
+    eval-mode validation accuracy swing between 0.10 and 1.00 from one
+    epoch to the next while the same weights with re-estimated statistics
+    scored 0.91-1.00 every epoch. Frozen BN layers (a linear probe's
+    ImageNet statistics) are left alone. Returns whether anything was done.
+    """
+    bns = [
+        m for m in model.modules()
+        if isinstance(m, torch.nn.modules.batchnorm._BatchNorm) and m.weight is not None and m.weight.requires_grad
+    ]
+    if not bns:
+        return False
+    was_training = model.training
+    momenta = [bn.momentum for bn in bns]
+    for bn in bns:
+        bn.reset_running_stats()
+        bn.momentum = None  # cumulative average over the pass
+    model.train()
+    for batch in loader:
+        forward_fn(model, batch, device)
+    for bn, mom in zip(bns, momenta):
+        bn.momentum = mom
+    model.train(was_training)
+    return True
+
+
 def build_optimizer(
     model: torch.nn.Module, name: str = "adam", lr: float = 1e-3, weight_decay: float = 0.0, momentum: float = 0.9
 ) -> torch.optim.Optimizer:
@@ -157,6 +189,7 @@ def train_classifier(
     restore_best: bool = True,
     verbose: bool = False,
     min_steps: int = 0,
+    precise_bn: bool = True,
 ) -> TrainResult:
     """Train on ``train_loader``, select on ``val_loader``.
 
@@ -201,6 +234,11 @@ def train_classifier(
             total_loss += loss.item() * labels.size(0)
             n += labels.size(0)
         train_loss = total_loss / n if n else 0.0
+
+        if precise_bn:
+            # Statistics from the training distribution (augmented, if the
+            # loader augments), never from validation data.
+            recalibrate_batchnorm(model, forward_fn, train_loader, device)
 
         val_loss, val_acc = evaluate_loss_and_accuracy(model, forward_fn, val_loader, device)
         current_lr = opt.param_groups[0]["lr"]

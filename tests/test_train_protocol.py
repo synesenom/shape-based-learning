@@ -182,3 +182,24 @@ def test_early_stopping_waits_for_min_steps():
     slow = train_classifier(model, cnn_forward, loader, loader, epochs=50, lr=0.0, early_stopping_patience=1, min_steps=20)
     assert fast.stopped_early and fast.steps < 20
     assert slow.stopped_early and slow.steps >= 20
+
+
+def test_precise_bn_reestimates_trainable_stats_and_skips_frozen():
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
+
+    from shapeprim.train import cnn_forward, recalibrate_batchnorm
+
+    x = torch.randn(16, 3, 4, 4) * 3 + 5
+    loader = DataLoader(TensorDataset(x, torch.zeros(16, dtype=torch.long)), batch_size=8)
+    net = torch.nn.Sequential(torch.nn.Conv2d(3, 2, 1), torch.nn.BatchNorm2d(2), torch.nn.Flatten(), torch.nn.Linear(32, 2))
+    assert recalibrate_batchnorm(net, cnn_forward, loader, "cpu")
+    with torch.no_grad():
+        feats = net[0](x)
+    assert torch.allclose(net[1].running_mean, feats.mean(dim=(0, 2, 3)), atol=1e-4)
+    assert net[1].momentum == 0.1  # restored
+    for p in net[1].parameters():
+        p.requires_grad = False
+    before = net[1].running_mean.clone()
+    assert not recalibrate_batchnorm(net, cnn_forward, DataLoader(TensorDataset(x * 0, torch.zeros(16, dtype=torch.long)), batch_size=8), "cpu")
+    assert torch.equal(net[1].running_mean, before)

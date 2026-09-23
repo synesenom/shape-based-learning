@@ -26,24 +26,36 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--min-steps", type=int, default=500)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--no-precise-bn", action="store_true",
+        help="instead: supersede CNN runs with trainable BatchNorm recorded before precise BN (rule 3c)",
+    )
     args = ap.parse_args()
     moved = 0
     for metrics in sorted(ROOT.glob("results/*/*/*/metrics.json")):
         run_dir = metrics.parent
-        if "superseded" in run_dir.parts[-2]:
+        if "superseded" in run_dir.parts[-3] or "superseded" in run_dir.parts[-2]:
             continue
         m = json.loads(metrics.read_text())
-        if "steps" in m:  # recorded under the rule
-            continue
         cfg = json.loads((run_dir / "config.json").read_text())["config"]
-        n_classes = len(cfg.get("classes") or [])
-        batch = cfg["experiment"]["batch_size"]
-        steps = m["epochs_run"] * math.ceil(m["n_train_per_class"] * n_classes / batch)
-        if not m.get("stopped_early") or steps >= args.min_steps:
-            continue
         phase, experiment = run_dir.parts[-3], run_dir.parts[-2]
-        dest = ROOT / "results" / phase / "superseded_patience8" / experiment / run_dir.name
-        print(f"{phase}/{experiment}/{run_dir.name}: stopped after {steps} steps")
+        if args.no_precise_bn:
+            model_cfg = cfg.get("model_spec", {}).get("model_config", m.get("kind"))
+            frozen = model_cfg == "cnn_probe"
+            if m.get("kind") != "cnn" or frozen or "precise_bn" in (m.get("train_params") or {}):
+                continue
+            dest = ROOT / "results" / phase / "superseded_no_precise_bn" / experiment / run_dir.name
+            print(f"{phase}/{experiment}/{run_dir.name}: trained without precise BN")
+        else:
+            if "steps" in m:  # recorded under the rule
+                continue
+            n_classes = len(cfg.get("classes") or [])
+            batch = cfg["experiment"]["batch_size"]
+            steps = m["epochs_run"] * math.ceil(m["n_train_per_class"] * n_classes / batch)
+            if not m.get("stopped_early") or steps >= args.min_steps:
+                continue
+            dest = ROOT / "results" / phase / "superseded_patience8" / experiment / run_dir.name
+            print(f"{phase}/{experiment}/{run_dir.name}: stopped after {steps} steps")
         moved += 1
         if not args.dry_run:
             dest.parent.mkdir(parents=True, exist_ok=True)

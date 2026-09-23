@@ -255,6 +255,9 @@ def train_params(model_cfg: dict, cfg: dict, n_train: Optional[int] = None, step
     return {
         "epochs": epochs_for(model_cfg, cfg, n_train, steps_per_epoch),
         "min_steps": cfg.get("min_steps", 0),
+        # Protocol rule 3c: BN statistics re-estimated on the training data
+        # before every validation pass (no-op for models without BN).
+        "precise_bn": cfg.get("precise_bn", True),
         "lr": model_cfg["lr"],
         "weight_decay": model_cfg.get("weight_decay", 0.0),
         "optimizer": model_cfg.get("optimizer", "adam"),

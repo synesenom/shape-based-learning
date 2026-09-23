@@ -59,6 +59,17 @@ Runs recorded before this rule that stopped earlier were moved to
 (`scripts/supersede_short_runs.py`); runs that trained past the floor are
 unaffected by it.
 
+**3c. Precise BatchNorm statistics.** Before every validation pass, the
+BatchNorm statistics of every trainable BN layer are re-estimated with one
+no-grad pass over the training data, augmentation included (Wu & Johnson
+2021). With the default running averages, augmented from-scratch ResNets
+swung between 0.10 and 1.00 validation accuracy from one epoch to the
+next, so model selection kept stopping on a stale-statistics dip; the same
+weights with re-estimated statistics scored 0.91-1.00 every epoch. The
+rule is a no-op for models without BN (every graph model) and leaves
+frozen BN alone (the ImageNet linear probe). CNN runs recorded before it
+were moved to `results/<phase>/superseded_no_precise_bn/` and re-run.
+
 **4. The same protocol on both sides.** The CNN and the GNN get the same
 schedule, warm-up, clipping, stopping rule and selection criterion. An
 advantage produced by tuning one side is exactly the artefact this
