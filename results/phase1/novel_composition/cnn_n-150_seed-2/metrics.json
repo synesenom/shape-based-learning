@@ -1,0 +1,293 @@
+{
+  "model": "cnn",
+  "kind": "cnn",
+  "seed": 2,
+  "n_train_per_class": 150,
+  "test_acc": 0.952,
+  "test_acc_indist": 1.0,
+  "shift_drop": 0.04800000000000004,
+  "condition": {
+    "name": "novel_composition",
+    "is_shift": true,
+    "changed": {
+      "template_set": {
+        "train": "base",
+        "test": "novel"
+      }
+    }
+  },
+  "best_val_acc": 1.0,
+  "best_epoch": 6,
+  "epochs_run": 15,
+  "stopped_early": true,
+  "train_seconds": 502.2871859073639,
+  "n_parameters": 11173962,
+  "twin_test_acc": 0.95,
+  "per_class_acc": {
+    "bicycle": 1.0,
+    "car": 0.94,
+    "truck": 0.98,
+    "cat_face": 1.0,
+    "house": 0.73,
+    "tree": 0.97,
+    "arrow_sign": 0.93,
+    "snowman": 0.98,
+    "person": 1.0,
+    "fish": 0.99
+  },
+  "confusion": {
+    "bicycle": {
+      "bicycle": 100,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "car": {
+      "bicycle": 1,
+      "car": 94,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 5
+    },
+    "truck": {
+      "bicycle": 2,
+      "car": 0,
+      "truck": 98,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "cat_face": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 100,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 0
+    },
+    "house": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 1,
+      "cat_face": 2,
+      "house": 73,
+      "tree": 8,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 16
+    },
+    "tree": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 97,
+      "arrow_sign": 0,
+      "snowman": 3,
+      "person": 0,
+      "fish": 0
+    },
+    "arrow_sign": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 93,
+      "snowman": 4,
+      "person": 3,
+      "fish": 0
+    },
+    "snowman": {
+      "bicycle": 1,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 1,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 98,
+      "person": 0,
+      "fish": 0
+    },
+    "person": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 0,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 100,
+      "fish": 0
+    },
+    "fish": {
+      "bicycle": 0,
+      "car": 0,
+      "truck": 0,
+      "cat_face": 1,
+      "house": 0,
+      "tree": 0,
+      "arrow_sign": 0,
+      "snowman": 0,
+      "person": 0,
+      "fish": 99
+    }
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.5969524185458819,
+      "val_loss": 1.5094279532972723,
+      "val_acc": 0.6125,
+      "lr": 0.0003333333333333333
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.08487098109722137,
+      "val_loss": 0.39002984680235386,
+      "val_acc": 0.895,
+      "lr": 0.0006666666666666666
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.05219570754716794,
+      "val_loss": 2.2206786847114564,
+      "val_acc": 0.5425,
+      "lr": 0.001
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.062186735788981116,
+      "val_loss": 0.13773458461391327,
+      "val_acc": 0.9475,
+      "lr": 0.0009968875438971553
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.029733332196560998,
+      "val_loss": 1.5618671669851756,
+      "val_acc": 0.65,
+      "lr": 0.0009875893165300026
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.005832005102420225,
+      "val_loss": 6.605859560605604,
+      "val_acc": 0.365,
+      "lr": 0.000972222248502642
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.002069629145475725,
+      "val_loss": 0.001062256161822006,
+      "val_acc": 1.0,
+      "lr": 0.0009509795896116974
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.01193459124925236,
+      "val_loss": 0.10125443272816483,
+      "val_acc": 0.9575,
+      "lr": 0.0009241284786180007
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.05848170736556252,
+      "val_loss": 4.457322825491414,
+      "val_acc": 0.4225,
+      "lr": 0.0008920065838216749
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.03186462029690544,
+      "val_loss": 15.027532653808594,
+      "val_acc": 0.115,
+      "lr": 0.000855017856687341
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.0019094172191495696,
+      "val_loss": 0.0008338258546427824,
+      "val_acc": 1.0,
+      "lr": 0.0008136274519200731
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.0005008059746275346,
+      "val_loss": 0.0003194420790532604,
+      "val_acc": 1.0,
+      "lr": 0.0007683558778750916
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.0004313428630121052,
+      "val_loss": 0.00033428458526032047,
+      "val_acc": 1.0,
+      "lr": 0.0007197724508631912
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.0003546582713412742,
+      "val_loss": 0.00022089823985879775,
+      "val_acc": 1.0,
+      "lr": 0.0006684881356678078
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.00031884668647156407,
+      "val_loss": 0.0001682486502977554,
+      "val_acc": 1.0,
+      "lr": 0.0006151478623083756
+    }
+  ],
+  "augment": {
+    "enabled": false,
+    "translate": 0.0,
+    "scale_range": [
+      1.0,
+      1.0
+    ],
+    "degrees": 0.0,
+    "shear": 0.0,
+    "hflip_prob": 0.0,
+    "brightness": 0.0,
+    "contrast": 0.0
+  },
+  "train_params": {
+    "epochs": 30,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "optimizer": "adam",
+    "momentum": 0.9,
+    "schedule": "cosine",
+    "warmup_epochs": 2,
+    "min_lr_fraction": 0.01,
+    "early_stopping_patience": 8,
+    "grad_clip": 5.0
+  },
+  "device": "cpu"
+}
