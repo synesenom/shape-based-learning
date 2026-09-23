@@ -4,7 +4,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
-/data/
+/data
 results/**/*.png
 results/**/*.json
 !results/phase1/sample_grid.png
