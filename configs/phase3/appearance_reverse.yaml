@@ -1,0 +1,38 @@
+# Phase 3a, the reverse direction: train textured -> test flat and on
+# colours never seen (PLAN.md section 7, "and vice versa").
+#
+# Training data: textures, the "seen" hue half, cluttered backgrounds and
+# light occlusion, viewing angles 0-30. Tests: the flat Phase 2 drawings,
+# and the same textured distribution in the unseen hue half.
+phase: phase3
+experiment: appearance_reverse
+
+image_size: 64
+n_train_per_class: 150
+n_val_per_class: 40
+n_test_per_class: 100
+distractor_prob: 0.0
+view_angle_range: [0, 30]
+seeds: [0, 1, 2]
+test_seed: 12345
+epochs: 40
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 200
+
+shift:
+  name: appearance_reverse
+  train: {texture: [flat, noise, stripes, dots, photo], palette: seen, clutter: true, occlusion_range: [0.0, 0.3]}
+  test: {}
+  tests:
+    rev_unseen_palette: {texture: [flat, noise, stripes, dots, photo], palette: unseen, clutter: true, occlusion_range: [0.0, 0.3]}
+
+models:
+  - {name: cnn, kind: cnn, augment: none}
+  - {name: cnn_aug_color, kind: cnn, augment: appearance}
+  - {name: cnn_probe, kind: cnn, model_config: cnn_probe, augment: none}
+  - {name: gnn_oracle, kind: gnn, extractor: oracle}
+  - {name: gnn_classical, kind: gnn, extractor: classical_v2}
+  - {name: gnn_learned_app, kind: gnn, extractor: learned, extractor_weights: data/models/learned_appearance.pt}

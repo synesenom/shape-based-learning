@@ -20,12 +20,13 @@ import random
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 from PIL import Image, ImageDraw
 
 from .objects import CLASS_NAMES, CLASS_TEMPLATES, NOVEL_VARIANTS, ClassTemplate
 from .primitives import PRIMITIVE_TYPES, Primitive
+from .textures import render_styled
 from .transforms import ViewSample, apply_view, sample_view
 
 DEFAULT_COLOR = (40, 40, 40)
@@ -57,6 +58,25 @@ class GenerationConfig:
     squash_range: Tuple[float, float] = (1.0, 1.0)
     view_angle_range: Tuple[float, float] = (0.0, 0.0)
     camera_distance: float = 2.5
+    # Phase 3a appearance (data/textures.py). All off by default; no random
+    # number is drawn for them unless one is enabled.
+    texture: Any = "flat"  # "flat" or a list of noise/stripes/dots/photo
+    palette: str = "default"  # default | seen | unseen
+    clutter: bool = False
+    occlusion_range: Tuple[float, float] = (0.0, 0.0)
+    noise_std: float = 0.0
+    blur_radius: float = 0.0
+
+    @property
+    def appearance_enabled(self) -> bool:
+        return (
+            self.texture != "flat"
+            or self.palette != "default"
+            or self.clutter
+            or tuple(self.occlusion_range) != (0.0, 0.0)
+            or self.noise_std > 0
+            or self.blur_radius > 0
+        )
 
     @property
     def view_enabled(self) -> bool:
@@ -70,7 +90,7 @@ class GenerationConfig:
     @classmethod
     def from_dict(cls, d: dict) -> "GenerationConfig":
         d = dict(d)
-        for key in ("object_scale_range", "rotation_range", "shear_range", "squash_range", "view_angle_range"):
+        for key in ("object_scale_range", "rotation_range", "shear_range", "squash_range", "view_angle_range", "occlusion_range"):
             if key in d:
                 d[key] = tuple(float(v) for v in d[key])
         if "color" in d:
@@ -173,10 +193,17 @@ def render_sample(
 
     draw_order = behind + primitives + front
 
-    image = Image.new("RGB", (size, size), cfg.background)
-    draw = ImageDraw.Draw(image)
-    for p in draw_order:
-        p.draw(draw)
+    if cfg.appearance_enabled:
+        image = render_styled(
+            draw_order, size, rng, texture=cfg.texture, palette=cfg.palette, base_color=instance_color,
+            background=cfg.background, clutter=cfg.clutter, occlusion_range=cfg.occlusion_range,
+            noise_std=cfg.noise_std, blur_radius=cfg.blur_radius,
+        )
+    else:
+        image = Image.new("RGB", (size, size), cfg.background)
+        draw = ImageDraw.Draw(image)
+        for p in draw_order:
+            p.draw(draw)
 
     return Sample(image=image, primitives=draw_order, label=class_name, view=view)
 

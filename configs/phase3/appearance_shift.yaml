@@ -1,0 +1,53 @@
+# Phase 3a, train flat -> test textured (PLAN.md section 7; H4).
+#
+# Training data is Phase 2's (viewing angles 0-30), drawn flat in dark
+# grey on white. Every test condition changes appearance only -- the
+# geometry of test image i is identical across conditions (same seed, and
+# the appearance stage draws its random numbers after the geometry) -- so
+# every accuracy difference below is an appearance effect, and paired.
+#
+# Extractors: the oracle is blind to appearance by construction (it gets
+# the ground truth), so its row isolates the classifier. classical_v2 and
+# the Phase 2 learned detector were built/trained on flat drawings; the
+# appearance-trained detector saw randomised appearance (never the unseen
+# palette, never a class label). Pixel models are reported plain, with
+# standard augmentation, and with colour-matched augmentation.
+phase: phase3
+experiment: appearance_shift
+
+image_size: 64
+n_train_per_class: 150
+n_val_per_class: 40
+n_test_per_class: 100
+distractor_prob: 0.0
+view_angle_range: [0, 30]
+seeds: [0, 1, 2]
+test_seed: 12345
+epochs: 40
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 200
+
+shift:
+  name: appearance
+  test: {texture: [noise, stripes, dots, photo], palette: unseen, clutter: true, occlusion_range: [0.1, 0.4], noise_std: 10.0, blur_radius: 0.5}
+  tests:
+    app_flat: {}
+    app_texture: {texture: [noise, stripes, dots, photo]}
+    app_palette_unseen: {palette: unseen}
+    app_clutter: {clutter: true}
+    app_occlusion: {occlusion_range: [0.1, 0.4]}
+    app_noise_blur: {noise_std: 15.0, blur_radius: 0.8}
+    app_combined: {texture: [noise, stripes, dots, photo], palette: unseen, clutter: true, occlusion_range: [0.1, 0.4], noise_std: 10.0, blur_radius: 0.5}
+
+models:
+  - {name: cnn, kind: cnn, augment: none}
+  - {name: cnn_aug, kind: cnn, augment: standard}
+  - {name: cnn_aug_color, kind: cnn, augment: appearance}
+  - {name: cnn_probe, kind: cnn, model_config: cnn_probe, augment: none}
+  - {name: gnn_oracle, kind: gnn, extractor: oracle}
+  - {name: gnn_classical, kind: gnn, extractor: classical_v2}
+  - {name: gnn_learned, kind: gnn, extractor: learned, extractor_weights: data/models/learned_phase2_0-30.pt}
+  - {name: gnn_learned_app, kind: gnn, extractor: learned, extractor_weights: data/models/learned_appearance.pt}

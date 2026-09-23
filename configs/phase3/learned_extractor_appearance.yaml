@@ -1,0 +1,39 @@
+# Learned extractor trained under randomised appearance (Phase 3a).
+#
+# Class-agnostic, primitive labels only, viewing angles 0-30 as in Phase 2,
+# plus every appearance dial *except* the unseen palette: textures, the
+# "seen" hue half, clutter, occlusion, noise and blur. This is the
+# "relocation" arm of H4 (docs/research_plan.md P5): the appearance problem
+# is moved into a class-agnostic stage 1 whose training signal is shared by
+# every class. Its F1 on the unseen palette is the test of whether that
+# robustness generalises.
+generation:
+  image_size: 64
+  distractor_prob: 0.0
+train_overrides:
+  view_angle_range: [0, 30]
+  texture: [flat, noise, stripes, dots, photo]
+  palette: seen
+  clutter: true
+  occlusion_range: [0.0, 0.3]
+  noise_std: 8.0
+  blur_radius: 0.4
+n_train_per_class: 600
+n_val_per_class: 40
+n_eval_per_class: 30
+epochs: 20
+lr: 0.002
+width: 32
+threshold: 0.3
+threads: 4
+seed: 0
+weights: data/models/learned_appearance.pt
+report: results/phase3/learned_extractor_appearance/summary.json
+eval_conditions:
+  flat: {view_angle_range: [0, 30]}
+  texture: {view_angle_range: [0, 30], texture: [noise, stripes, dots, photo]}
+  palette_unseen: {view_angle_range: [0, 30], palette: unseen}
+  clutter: {view_angle_range: [0, 30], clutter: true, palette: unseen}
+  occlusion: {view_angle_range: [0, 30], occlusion_range: [0.1, 0.4]}
+  noise_blur: {view_angle_range: [0, 30], noise_std: 15.0, blur_radius: 0.8}
+  combined: {view_angle_range: [0, 30], texture: [noise, stripes, dots, photo], palette: unseen, clutter: true, occlusion_range: [0.1, 0.4], noise_std: 10.0, blur_radius: 0.5}
