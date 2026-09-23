@@ -1,0 +1,17 @@
+# ImageNet-pretrained ResNet-18, fine-tuned end to end (PLAN.md section 4).
+# Original 7x7 stem + maxpool, since that is what the weights were learned
+# for; the 64px images are resized to 128px inside the model (32x32 maps
+# after the stem, the same cost as the from-scratch stride-2 model).
+# Fine-tuning uses a smaller learning rate than training from scratch;
+# this is a default, not a tuned value.
+pretrained: true
+input_size: 128
+freeze_backbone: false
+lr: 0.0003
+weight_decay: 0.0001
+optimizer: adam
+schedule: cosine
+warmup_epochs: 2
+min_lr_fraction: 0.01
+early_stopping_patience: 8
+grad_clip: 5.0

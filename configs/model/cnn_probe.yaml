@@ -1,0 +1,15 @@
+# Frozen ImageNet ResNet-18 + a trained linear layer: the linear probe.
+# This is what a practitioner with a handful of labelled images per class
+# would reach for first, so it is the honest few-shot pixel baseline
+# (docs/research_plan.md, P1 is falsified if this matches the oracle GNN).
+pretrained: true
+input_size: 128
+freeze_backbone: true
+lr: 0.01
+weight_decay: 0.0001
+optimizer: adam
+schedule: cosine
+warmup_epochs: 2
+min_lr_fraction: 0.01
+early_stopping_patience: 8
+grad_clip: 5.0

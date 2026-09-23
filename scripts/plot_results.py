@@ -47,6 +47,10 @@ SERIES_COLORS = {
     "gnn_oracle": "#1baf7a",
     "gnn_classical": "#eda100",
     "cnn_aug_strong": "#e87ba4",
+    "cnn_probe": "#4a3aa7",
+    "cnn_pretrained": "#8a6fd1",
+    "st_oracle": "#008300",
+    "bag_oracle": "#e34948",
 }
 FALLBACK_COLORS = ["#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 
@@ -65,6 +69,12 @@ DISPLAY_NAMES = {
     "cnn_aug_strong": "CNN + strong aug",
     "gnn_oracle": "GNN (oracle)",
     "gnn_classical": "GNN (classical)",
+    "cnn_probe": "ImageNet probe",
+    "cnn_pretrained": "ImageNet fine-tune",
+    "st_oracle": "Set transformer (oracle)",
+    "st_classical": "Set transformer (classical)",
+    "bag_oracle": "Bag (oracle)",
+    "bag_classical": "Bag (classical)",
 }
 
 

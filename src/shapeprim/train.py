@@ -104,12 +104,15 @@ def build_optimizer(
     model: torch.nn.Module, name: str = "adam", lr: float = 1e-3, weight_decay: float = 0.0, momentum: float = 0.9
 ) -> torch.optim.Optimizer:
     name = name.lower()
+    # Frozen parameters (a linear probe's backbone) are not handed to the
+    # optimizer: weight decay would otherwise still shrink them.
+    params = [p for p in model.parameters() if p.requires_grad]
     if name == "adam":
-        return torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        return torch.optim.Adam(params, lr=lr, weight_decay=weight_decay)
     if name == "adamw":
-        return torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        return torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)
     if name == "sgd":
-        return torch.optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum, nesterov=True)
+        return torch.optim.SGD(params, lr=lr, weight_decay=weight_decay, momentum=momentum, nesterov=True)
     raise ValueError(f"unknown optimizer {name!r}; known: adam, adamw, sgd")
 
 
