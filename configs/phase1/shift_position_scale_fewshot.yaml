@@ -1,3 +1,6 @@
+# Position / scale shift at 25 examples/class: the few-shot end of the same
+# test (PLAN.md section 5 wants the primitive model to win on both).
+#
 # Position / scale shift (PLAN.md section 5; experiment 2 in
 # docs/phase1_evaluation_next_steps.md; WP0 item 4's shift table).
 #
@@ -15,10 +18,10 @@
 # then the position/scale advantage is an augmentation result rather than
 # a representation result.
 phase: phase1
-experiment: shift_position_scale
+experiment: shift_position_scale_fewshot
 
 image_size: 64
-n_train_per_class: 150
+n_train_per_class: 25
 n_val_per_class: 40
 n_test_per_class: 100
 distractor_prob: 0.0
@@ -34,7 +37,7 @@ shift:
 
 seeds: [0, 1, 2]
 test_seed: 12345
-epochs: 30
+epochs: 60
 batch_size: 32
 num_workers: 0
 device: auto

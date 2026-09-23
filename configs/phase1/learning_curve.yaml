@@ -1,6 +1,7 @@
-# Few-shot learning curves (PLAN.md section 4's evaluation rule; E1 in
-# docs/research_plan.md). Same protocol as the baseline, swept over
-# training-set size.
+# Few-shot learning curves (PLAN.md section 4's evaluation rule and the
+# Phase 1 "few-shot" test; E1 in docs/research_plan.md). Same protocol as
+# the baseline, swept over training-set size, on dataset v2 (arrow_sign a
+# true relation twin of tree).
 #
 # Caveat to carry into any write-up: n_val_per_class stays fixed at 40
 # while training shrinks to 5/class, so at the small end the model selects
@@ -18,11 +19,14 @@ n_test_per_class: 100
 distractor_prob: 0.0
 
 sweep:
-  n_train_per_class: [5, 10, 25, 50, 100, 250]
+  n_train_per_class: [5, 10, 25, 50, 100, 1000]
 
 seeds: [0, 1, 2]
 test_seed: 12345
 epochs: 60
+# An epoch at 1000/class is 200x one at 5/class; cap it so the large end
+# gets a comparable number of optimizer steps rather than hours of CPU.
+epochs_by_n: {1000: 12}
 batch_size: 32
 num_workers: 0
 device: auto
@@ -36,9 +40,23 @@ models:
   - name: cnn_aug
     kind: cnn
     augment: standard
+  - name: cnn_pretrained
+    kind: cnn
+    model_config: cnn_pretrained
+    augment: standard
+  - name: cnn_probe
+    kind: cnn
+    model_config: cnn_probe
+    augment: none
   - name: gnn_oracle
     kind: gnn
     extractor: oracle
   - name: gnn_classical
     kind: gnn
     extractor: classical
+  - name: st_oracle
+    kind: settransformer
+    extractor: oracle
+  - name: bag_oracle
+    kind: bag
+    extractor: oracle
