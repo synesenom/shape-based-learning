@@ -1,0 +1,115 @@
+{
+  "config": {
+    "experiment": {
+      "phase": "phase1",
+      "experiment": "novel_composition_pooling",
+      "image_size": 64,
+      "n_train_per_class": 150,
+      "n_val_per_class": 40,
+      "n_test_per_class": 100,
+      "distractor_prob": 0.0,
+      "shift": {
+        "name": "novel_composition",
+        "test": {
+          "template_set": "novel"
+        }
+      },
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "test_seed": 12345,
+      "epochs": 30,
+      "batch_size": 32,
+      "num_workers": 0,
+      "device": "auto",
+      "cache_dir": "data/cache",
+      "extractor_eval_samples": 200,
+      "models": [
+        {
+          "name": "gnn_oracle",
+          "kind": "gnn",
+          "extractor": "oracle"
+        },
+        {
+          "name": "gnn_oracle_max",
+          "kind": "gnn",
+          "extractor": "oracle",
+          "model_overrides": {
+            "pooling": "max"
+          }
+        },
+        {
+          "name": "gnn_oracle_attn",
+          "kind": "gnn",
+          "extractor": "oracle",
+          "model_overrides": {
+            "pooling": "attention"
+          }
+        },
+        {
+          "name": "gnn_classical",
+          "kind": "gnn",
+          "extractor": "classical"
+        },
+        {
+          "name": "gnn_classical_max",
+          "kind": "gnn",
+          "extractor": "classical",
+          "model_overrides": {
+            "pooling": "max"
+          }
+        },
+        {
+          "name": "gnn_classical_attn",
+          "kind": "gnn",
+          "extractor": "classical",
+          "model_overrides": {
+            "pooling": "attention"
+          }
+        }
+      ]
+    },
+    "model_spec": {
+      "name": "gnn_classical_attn",
+      "kind": "gnn",
+      "extractor": "classical",
+      "model_overrides": {
+        "pooling": "attention"
+      }
+    },
+    "seed": 0,
+    "n_train_per_class": 150,
+    "classes": [
+      "bicycle",
+      "car",
+      "truck",
+      "cat_face",
+      "house",
+      "tree",
+      "arrow_sign",
+      "snowman",
+      "person",
+      "fish"
+    ],
+    "condition": {
+      "name": "novel_composition",
+      "is_shift": true,
+      "changed": {
+        "template_set": {
+          "train": "base",
+          "test": "novel"
+        }
+      }
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "timestamp_utc": "2026-09-23T20:02:56+00:00",
+    "git_commit": "bab5d193c1a7c1d5734d7c93ebd2944f670b1f7e",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false
+  }
+}

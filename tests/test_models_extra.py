@@ -78,3 +78,33 @@ def test_novel_template_set_renders_variants_and_base_is_unchanged():
     novel = SynthShapeDataset(classes=["car"], n_per_class=8, cfg=novel_cfg, seed=0)
     assert all(len(base[i].primitives) == 5 for i in range(8))
     assert any(len(novel[i].primitives) != 5 for i in range(8))
+
+
+import pytest
+from shapeprim.graph.build import NUM_EDGE_FEATURES
+from shapeprim.models.gnn import GNNClassifier
+
+
+@pytest.mark.parametrize("pooling", ["mean", "max", "attention"])
+def test_gnn_pooling_shapes_and_permutation_invariance(pooling):
+    torch.manual_seed(0)
+    nf, ei, ef, nb, ng, _ = _batch()
+    model = GNNClassifier(NUM_NODE_FEATURES, NUM_EDGE_FEATURES, num_classes=3, hidden_dim=16, num_layers=2, pooling=pooling).eval()
+    with torch.no_grad():
+        out = model(nf, ei, ef, nb, ng)
+        assert out.shape == (ng, 3)
+        # Reverse the node order of the whole batch, remapping edges.
+        n = nf.size(0)
+        perm = torch.arange(n - 1, -1, -1)
+        inv = torch.empty_like(perm)
+        inv[perm] = torch.arange(n)
+        out2 = model(nf[perm], inv[ei], ef, nb[perm], ng)
+    assert torch.allclose(out, out2, atol=1e-5)
+
+
+@pytest.mark.parametrize("pooling", ["mean", "max", "attention"])
+def test_gnn_pooling_empty_graph(pooling):
+    model = GNNClassifier(NUM_NODE_FEATURES, NUM_EDGE_FEATURES, num_classes=3, hidden_dim=16, pooling=pooling).eval()
+    out = model(torch.zeros(0, NUM_NODE_FEATURES), torch.zeros(2, 0, dtype=torch.long),
+                torch.zeros(0, NUM_EDGE_FEATURES), torch.zeros(0, dtype=torch.long), 2)
+    assert out.shape == (2, 3) and torch.isfinite(out).all()

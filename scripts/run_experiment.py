@@ -297,10 +297,11 @@ def run_one(
         augment_record = augment.to_dict()
     elif kind in GRAPH_MODELS:
         loaders, datasets = make_loaders_graph(cfg, condition, classes, seed, n_train, spec)
-        arch_kwargs = {k: model_cfg[k] for k in ("hidden_dim", "num_layers", "dropout", "num_heads") if k in model_cfg}
+        arch_kwargs = {k: model_cfg[k] for k in ("hidden_dim", "num_layers", "dropout", "num_heads", "pooling") if k in model_cfg}
         if kind == "gnn":
             model = GNNClassifier(NUM_NODE_FEATURES, NUM_EDGE_FEATURES, num_classes=len(classes), **arch_kwargs)
         elif kind == "settransformer":
+            arch_kwargs.pop("pooling", None)
             model = SetTransformerClassifier(NUM_NODE_FEATURES, num_classes=len(classes), **arch_kwargs)
         else:
             model = BagClassifier(num_classes=len(classes), **arch_kwargs)
