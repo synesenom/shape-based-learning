@@ -1,0 +1,25 @@
+# Learned primitive extractor for Phase 2 (PLAN.md sections 4 and 6).
+# Trained class-agnostically on primitive labels from the *training*
+# viewing-angle range only (0-30 degrees), so its F1 at 30-50 and 50-70
+# degrees is an extrapolation measurement, exactly like the classifiers'.
+generation:
+  image_size: 64
+  distractor_prob: 0.0
+train_overrides:
+  view_angle_range: [0, 30]
+n_train_per_class: 600
+n_val_per_class: 40
+n_eval_per_class: 30
+epochs: 20
+lr: 0.002
+width: 32
+threshold: 0.3
+threads: 2
+seed: 0
+weights: data/models/learned_phase2_0-30.pt
+report: results/phase2/learned_extractor/summary.json
+eval_conditions:
+  frontal: {view_angle_range: [0, 0.001]}
+  angle_0-30: {view_angle_range: [0, 30]}
+  angle_30-50: {view_angle_range: [30, 50]}
+  angle_50-70: {view_angle_range: [50, 70]}

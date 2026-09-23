@@ -26,6 +26,7 @@ from PIL import Image, ImageDraw
 
 from .objects import CLASS_NAMES, CLASS_TEMPLATES, NOVEL_VARIANTS, ClassTemplate
 from .primitives import PRIMITIVE_TYPES, Primitive
+from .transforms import ViewSample, apply_view, sample_view
 
 DEFAULT_COLOR = (40, 40, 40)
 BACKGROUND = (255, 255, 255)
@@ -47,12 +48,31 @@ class GenerationConfig:
     # training) or "novel" (the held-out composition variants in
     # objects.NOVEL_VARIANTS, used for the novel-composition test).
     template_set: str = "base"
+    # Phase 2 viewpoint (data/transforms.py). Ranges are magnitudes in
+    # degrees (rotation, view angle) or plain numbers (shear, squash); all
+    # default to the identity, and no random number is drawn for them
+    # unless one is enabled, so Phase 1 data is unchanged bit for bit.
+    rotation_range: Tuple[float, float] = (0.0, 0.0)
+    shear_range: Tuple[float, float] = (0.0, 0.0)
+    squash_range: Tuple[float, float] = (1.0, 1.0)
+    view_angle_range: Tuple[float, float] = (0.0, 0.0)
+    camera_distance: float = 2.5
+
+    @property
+    def view_enabled(self) -> bool:
+        return (
+            tuple(self.rotation_range) != (0.0, 0.0)
+            or tuple(self.shear_range) != (0.0, 0.0)
+            or tuple(self.squash_range) != (1.0, 1.0)
+            or tuple(self.view_angle_range) != (0.0, 0.0)
+        )
 
     @classmethod
     def from_dict(cls, d: dict) -> "GenerationConfig":
         d = dict(d)
-        if "object_scale_range" in d:
-            d["object_scale_range"] = tuple(d["object_scale_range"])
+        for key in ("object_scale_range", "rotation_range", "shear_range", "squash_range", "view_angle_range"):
+            if key in d:
+                d[key] = tuple(float(v) for v in d[key])
         if "color" in d:
             d["color"] = tuple(d["color"])
         if "background" in d:
@@ -66,6 +86,7 @@ class Sample:
     image: Image.Image
     primitives: List[Primitive]
     label: str
+    view: Optional[ViewSample] = None
 
 
 def _stable_seed(*parts) -> int:
@@ -143,6 +164,13 @@ def render_sample(
             d = _random_distractor(size, rng, cfg)
             (front if rng.random() < 0.5 else behind).append(d)
 
+    view = None
+    if cfg.view_enabled:
+        view = sample_view(
+            rng, cfg.rotation_range, cfg.shear_range, cfg.squash_range, cfg.view_angle_range
+        )
+        primitives = apply_view(primitives, view, (cx, cy), obj_size, size, cfg.camera_distance)
+
     draw_order = behind + primitives + front
 
     image = Image.new("RGB", (size, size), cfg.background)
@@ -150,7 +178,7 @@ def render_sample(
     for p in draw_order:
         p.draw(draw)
 
-    return Sample(image=image, primitives=draw_order, label=class_name)
+    return Sample(image=image, primitives=draw_order, label=class_name, view=view)
 
 
 def _random_distractor(size: int, rng: random.Random, cfg: GenerationConfig) -> Primitive:

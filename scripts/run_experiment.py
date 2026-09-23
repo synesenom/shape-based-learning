@@ -59,7 +59,7 @@ from shapeprim.experiment import (  # noqa: E402
     set_all_seeds,
     write_json,
 )
-from shapeprim.extract.classical import ClassicalExtractor  # noqa: E402
+from shapeprim.extract.classical import ClassicalExtractor, ClassicalExtractorV2  # noqa: E402
 from shapeprim.extract.oracle import OracleExtractor  # noqa: E402
 from shapeprim.graph.build import NUM_EDGE_FEATURES, NUM_NODE_FEATURES  # noqa: E402
 from shapeprim.models.cnn import build_cnn  # noqa: E402
@@ -78,7 +78,23 @@ from shapeprim.train import (  # noqa: E402
 # separately on every run because overall accuracy hides it (2 of 10 classes).
 RELATION_TWINS = ("tree", "arrow_sign")
 
-EXTRACTORS = {"oracle": OracleExtractor, "classical": ClassicalExtractor}
+EXTRACTORS = {"oracle": OracleExtractor, "classical": ClassicalExtractor, "classical_v2": ClassicalExtractorV2}
+
+
+def make_extractor(spec: dict):
+    """The extractor a model spec names; ``learned`` needs ``extractor_weights``."""
+    name = spec["extractor"]
+    if name == "learned":
+        from shapeprim.extract.learned import LearnedExtractor
+
+        weights = REPO_ROOT / spec["extractor_weights"]
+        if not weights.exists():
+            raise SystemExit(
+                f"learned extractor weights {weights} not found; train them first with "
+                "scripts/train_learned_extractor.py"
+            )
+        return LearnedExtractor(weights, threshold=spec.get("extractor_threshold", 0.3))
+    return EXTRACTORS[name]()
 
 # Every primitive-side model consumes the same graph batches; they differ
 # only in how much of the graph they are allowed to use (the bag ablation
@@ -160,20 +176,26 @@ def make_loaders_image(
             ds(condition.train_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test"),
             batch_size=cfg["batch_size"], num_workers=workers,
         )
+    for name, test_cfg in condition.extra_tests.items():
+        out[f"test__{name}"] = DataLoader(
+            ds(test_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test"),
+            batch_size=cfg["batch_size"], num_workers=workers,
+        )
     return out
 
 
 def make_loaders_graph(
-    cfg: dict, condition: Condition, classes: List[str], seed: int, n_train: int, extractor_name: str
+    cfg: dict, condition: Condition, classes: List[str], seed: int, n_train: int, spec: dict
 ) -> tuple[Dict[str, DataLoader], Dict[str, GraphClassificationDataset]]:
     workers = cfg.get("num_workers", 0)
     cache_dir = REPO_ROOT / cfg["cache_dir"] if cfg.get("cache_dir") else None
-    extractor = EXTRACTORS[extractor_name]()
+    extractor = make_extractor(spec)
+    frame = spec.get("graph_frame", "bbox")
 
     def ds(gen_cfg, n, seed_, split):
         return GraphClassificationDataset(
             extractor, classes=classes, cfg=gen_cfg, cache_dir=cache_dir,
-            n_per_class=n, seed=seed_, split=split,
+            n_per_class=n, seed=seed_, split=split, frame=frame,
         )
 
     datasets = {
@@ -183,6 +205,8 @@ def make_loaders_graph(
     }
     if condition.is_shift:
         datasets["test_indist"] = ds(condition.train_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test")
+    for name, test_cfg in condition.extra_tests.items():
+        datasets[f"test__{name}"] = ds(test_cfg, cfg["n_test_per_class"], cfg["test_seed"], "test")
 
     # Extract once, in this process, before any DataLoader worker forks.
     for d in datasets.values():
@@ -249,6 +273,7 @@ def run_one(
     set_all_seeds(seed)
 
     extractor_report: Optional[dict] = None
+    extra_f1: Dict[str, float] = {}
 
     model_cfg = dict(model_configs[spec.get("model_config", kind)])
     model_cfg.update(spec.get("model_overrides", {}))
@@ -266,8 +291,7 @@ def run_one(
         forward_fn = cnn_forward
         augment_record = augment.to_dict()
     elif kind in GRAPH_MODELS:
-        extractor_name = spec["extractor"]
-        loaders, datasets = make_loaders_graph(cfg, condition, classes, seed, n_train, extractor_name)
+        loaders, datasets = make_loaders_graph(cfg, condition, classes, seed, n_train, spec)
         arch_kwargs = {k: model_cfg[k] for k in ("hidden_dim", "num_layers", "dropout", "num_heads") if k in model_cfg}
         if kind == "gnn":
             model = GNNClassifier(NUM_NODE_FEATURES, NUM_EDGE_FEATURES, num_classes=len(classes), **arch_kwargs)
@@ -281,6 +305,13 @@ def run_one(
         extractor_report = evaluate_extractor(
             datasets["test"], max_samples=cfg.get("extractor_eval_samples", 200)
         )
+        extra_f1 = {
+            name[len("test__"):]: evaluate_extractor(
+                d, max_samples=cfg.get("extractor_eval_samples", 200), per_class=False
+            )["f1"]
+            for name, d in datasets.items()
+            if name.startswith("test__")
+        }
     else:
         raise ValueError(f"unknown model kind {kind!r}; known: cnn, {', '.join(GRAPH_MODELS)}")
 
@@ -336,9 +367,14 @@ def run_one(
         "train_params": params,
         "device": device,
     }
+    for name, loader in loaders.items():
+        if name.startswith("test__"):
+            record[f"test_acc__{name[len('test__'):]}"] = evaluate_classifier(model, forward_fn, loader, device)
     if extractor_report is not None:
         record["extractor"] = extractor_report
         record["extractor_f1"] = extractor_report["f1"]
+        for name, f1 in extra_f1.items():
+            record[f"extractor_f1__{name}"] = f1
     return record
 
 
@@ -459,7 +495,12 @@ def main() -> None:
         for spec in specs:
             rows = [r for r in records if r["model"] == spec["name"] and r["n_train_per_class"] == n_train]
             if rows:
-                per_model[spec["name"]] = aggregate_runs(rows, AGGREGATE_KEYS)
+                extra_keys = sorted(
+                    {k for r in rows for k in r if k.startswith(("test_acc__", "extractor_f1__"))}
+                )
+                per_model[spec["name"]] = aggregate_runs(rows, list(AGGREGATE_KEYS) + extra_keys)
+                if spec.get("extractor"):
+                    per_model[spec["name"]]["extractor_name"] = spec["extractor"]
         summary["conditions"][str(n_train)] = per_model
 
         print()

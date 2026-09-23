@@ -188,10 +188,19 @@ class GraphClassificationDataset(Dataset):
         seed: int = 0,
         split: str = "",
         cache_dir: Optional[str | Path] = None,
+        frame: str = "bbox",
     ):
         self.inner = SynthShapeDataset(classes=classes, n_per_class=n_per_class, cfg=cfg, seed=seed, split=split)
         self.class_to_idx = class_to_idx(self.inner.classes)
         self.extractor = extractor
+        # Graph coordinate frame (graph/build.py): "bbox" or "affine". Not
+        # part of the cache key -- the cache holds primitives, and the graph
+        # is rebuilt from them in whichever frame is asked for.
+        self.frame = frame
+        # Graphs are deterministic given the cached primitives; building one
+        # (especially in the affine frame, which refits every primitive) is
+        # the per-epoch cost once extraction is cached, so keep them too.
+        self._graphs: Dict[int, ShapeGraph] = {}
         self.cache_key = _identity_key(
             self.inner.classes, n_per_class, self.inner.cfg, seed, split, getattr(extractor, "name", type(extractor).__name__)
         )
@@ -234,9 +243,12 @@ class GraphClassificationDataset(Dataset):
             self.cache.save()
 
     def __getitem__(self, idx: int) -> Tuple[ShapeGraph, int]:
-        primitives, _gt, label = self.primitives_at(idx)
-        graph = build_graph(primitives, label=label)
-        return graph, self.class_to_idx[label]
+        graph = self._graphs.get(idx)
+        if graph is None:
+            primitives, _gt, label = self.primitives_at(idx)
+            graph = build_graph(primitives, label=label, frame=self.frame)
+            self._graphs[idx] = graph
+        return graph, self.class_to_idx[graph.label]
 
 
 def collate_graphs(batch: List[Tuple[ShapeGraph, int]]):
