@@ -33,7 +33,7 @@ from torch.utils.data import Dataset
 from ..extract.base import PrimitiveExtractor
 from ..graph.build import NUM_EDGE_FEATURES, NUM_NODE_FEATURES, ShapeGraph, build_graph
 from .augment import AugmentConfig, build_transform, resolve_augment
-from .objects import CLASS_NAMES
+from .objects import CLASS_NAMES, DATASET_VERSION
 from .primitives import Primitive
 from .synth_dataset import GenerationConfig, SynthShapeDataset
 
@@ -69,6 +69,7 @@ def _identity_key(
         "seed": seed,
         "split": split,
         "extractor": extractor_name,
+        "dataset_version": DATASET_VERSION,
     }
     blob = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(blob).hexdigest()[:16]

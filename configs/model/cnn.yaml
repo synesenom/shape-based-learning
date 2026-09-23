@@ -9,6 +9,11 @@
 # short warm-up removes the collapses; early stopping on validation makes
 # the run length adaptive instead of a guess.
 pretrained: false
+# 3x3 stem stride. The Phase 1 baseline table (commit 8390f99) used 1; from
+# the learning curves on, 2 (the CIFAR-ResNet operating point: 32x32 maps
+# after the stem on 64px input), which is ~5x cheaper per step on CPU and
+# is what makes 3-seed sweeps up to 1000 examples/class affordable.
+stem_stride: 2
 lr: 0.001
 weight_decay: 0.0001
 optimizer: adam

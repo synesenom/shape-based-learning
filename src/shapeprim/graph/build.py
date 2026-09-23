@@ -25,6 +25,11 @@ import numpy as np
 from ..data.primitives import PRIMITIVE_TYPES, Primitive
 
 NUM_NODE_FEATURES = len(PRIMITIVE_TYPES) + 1 + 1 + 2 + 2  # type + size + aspect + rot(sin,cos) + pos(x,y)
+NUM_TYPES = len(PRIMITIVE_TYPES)
+# Column positions inside a node feature vector, for models that read
+# individual features (the bag ablation reads size and aspect only).
+SIZE_INDEX = NUM_TYPES
+ASPECT_INDEX = NUM_TYPES + 1
 NUM_EDGE_FEATURES = 11  # dx, dy, distance, size_ratio, sin(angle), cos(angle), above, below, left, right, inside
 
 _TYPE_INDEX = {t: i for i, t in enumerate(PRIMITIVE_TYPES)}

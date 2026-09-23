@@ -24,7 +24,7 @@ from typing import List, Optional, Sequence, Tuple
 
 from PIL import Image, ImageDraw
 
-from .objects import CLASS_NAMES, CLASS_TEMPLATES, ClassTemplate
+from .objects import CLASS_NAMES, CLASS_TEMPLATES, NOVEL_VARIANTS, ClassTemplate
 from .primitives import PRIMITIVE_TYPES, Primitive
 
 DEFAULT_COLOR = (40, 40, 40)
@@ -43,6 +43,10 @@ class GenerationConfig:
     background: Tuple[int, int, int] = BACKGROUND
     distractor_prob: float = 0.0
     max_distractors: int = 2
+    # Which templates to draw from: "base" (the canonical template, used for
+    # training) or "novel" (the held-out composition variants in
+    # objects.NOVEL_VARIANTS, used for the novel-composition test).
+    template_set: str = "base"
 
     @classmethod
     def from_dict(cls, d: dict) -> "GenerationConfig":
@@ -84,7 +88,15 @@ def render_sample(
     template: Optional[ClassTemplate] = None,
 ) -> Sample:
     """Render one instance of ``class_name``, returning image + ground truth."""
-    template = template or CLASS_TEMPLATES[class_name]
+    if template is None:
+        if cfg.template_set == "base":
+            template = CLASS_TEMPLATES[class_name]
+        elif cfg.template_set == "novel":
+            # Only consumed on the novel path, so the base stream (and every
+            # dataset generated before variants existed) is unchanged.
+            template = rng.choice(NOVEL_VARIANTS[class_name])
+        else:
+            raise ValueError(f"unknown template_set {cfg.template_set!r}; known: base, novel")
     size = cfg.image_size
 
     obj_scale = rng.uniform(*cfg.object_scale_range)

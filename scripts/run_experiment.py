@@ -63,7 +63,9 @@ from shapeprim.extract.classical import ClassicalExtractor  # noqa: E402
 from shapeprim.extract.oracle import OracleExtractor  # noqa: E402
 from shapeprim.graph.build import NUM_EDGE_FEATURES, NUM_NODE_FEATURES  # noqa: E402
 from shapeprim.models.cnn import build_cnn  # noqa: E402
+from shapeprim.models.bag import BagClassifier  # noqa: E402
 from shapeprim.models.gnn import GNNClassifier  # noqa: E402
+from shapeprim.models.settransformer import SetTransformerClassifier  # noqa: E402
 from shapeprim.train import (  # noqa: E402
     cnn_forward,
     evaluate_classifier,
@@ -77,6 +79,30 @@ from shapeprim.train import (  # noqa: E402
 RELATION_TWINS = ("tree", "arrow_sign")
 
 EXTRACTORS = {"oracle": OracleExtractor, "classical": ClassicalExtractor}
+
+# Every primitive-side model consumes the same graph batches; they differ
+# only in how much of the graph they are allowed to use (the bag ablation
+# ignores positions and edges, the set transformer ignores edges).
+GRAPH_MODELS = {"gnn": GNNClassifier, "settransformer": SetTransformerClassifier, "bag": BagClassifier}
+
+
+class ModelConfigs:
+    """``configs/model/<name>.yaml``, loaded on first use.
+
+    A model spec names its config with ``model_config`` (default: its
+    ``kind``), so a pretrained CNN or a linear probe is a new YAML file,
+    not a new code path.
+    """
+
+    def __init__(self, overrides: Optional[Dict[str, str]] = None):
+        self.paths = dict(overrides or {})
+        self._cache: Dict[str, dict] = {}
+
+    def __getitem__(self, name: str) -> dict:
+        if name not in self._cache:
+            path = self.paths.get(name, f"configs/model/{name}.yaml")
+            self._cache[name] = load_yaml(REPO_ROOT / path)
+        return self._cache[name]
 
 # Metrics aggregated across seeds for the summary table.
 AGGREGATE_KEYS = (
@@ -172,10 +198,28 @@ def make_loaders_graph(
     return loaders, datasets
 
 
-def train_params(model_cfg: dict, cfg: dict) -> dict:
+def epochs_for(model_cfg: dict, cfg: dict, n_train: Optional[int]) -> int:
+    """Epoch budget, optionally shrunk for large training sets.
+
+    ``epochs_by_n`` maps a training-set size to an epoch cap. An epoch at
+    1000 examples per class is 100x an epoch at 10, so a fixed epoch count
+    either starves the few-shot end or spends hours at the large end;
+    capping by size keeps the optimizer-step budget in the same range. The
+    cap applies to every model alike and early stopping still applies.
+    """
+    epochs = model_cfg.get("epochs", cfg["epochs"])
+    caps = cfg.get("epochs_by_n") or {}
+    if n_train is not None:
+        applicable = [int(v) for k, v in caps.items() if n_train >= int(k)]
+        if applicable:
+            epochs = min(epochs, min(applicable))
+    return epochs
+
+
+def train_params(model_cfg: dict, cfg: dict, n_train: Optional[int] = None) -> dict:
     """Training hyperparameters, model config overriding experiment defaults."""
     return {
-        "epochs": model_cfg.get("epochs", cfg["epochs"]),
+        "epochs": epochs_for(model_cfg, cfg, n_train),
         "lr": model_cfg["lr"],
         "weight_decay": model_cfg.get("weight_decay", 0.0),
         "optimizer": model_cfg.get("optimizer", "adam"),
@@ -193,7 +237,7 @@ def train_params(model_cfg: dict, cfg: dict) -> dict:
 def run_one(
     spec: dict,
     cfg: dict,
-    model_configs: Dict[str, dict],
+    model_configs: "ModelConfigs",
     classes: List[str],
     seed: int,
     n_train: int,
@@ -206,27 +250,31 @@ def run_one(
 
     extractor_report: Optional[dict] = None
 
+    model_cfg = dict(model_configs[spec.get("model_config", kind)])
+    model_cfg.update(spec.get("model_overrides", {}))
+
     if kind == "cnn":
-        model_cfg = dict(model_configs["cnn"])
-        model_cfg.update(spec.get("model_overrides", {}))
         augment = resolve_augment(spec.get("augment"))
         loaders = make_loaders_image(cfg, condition, classes, seed, n_train, augment)
-        model = build_cnn(num_classes=len(classes), pretrained=model_cfg.get("pretrained", False))
+        model = build_cnn(
+            num_classes=len(classes),
+            pretrained=model_cfg.get("pretrained", False),
+            stem_stride=model_cfg.get("stem_stride", 1),
+            input_size=model_cfg.get("input_size", 128),
+            freeze_backbone=model_cfg.get("freeze_backbone", False),
+        )
         forward_fn = cnn_forward
         augment_record = augment.to_dict()
-    elif kind == "gnn":
-        model_cfg = dict(model_configs["gnn"])
-        model_cfg.update(spec.get("model_overrides", {}))
+    elif kind in GRAPH_MODELS:
         extractor_name = spec["extractor"]
         loaders, datasets = make_loaders_graph(cfg, condition, classes, seed, n_train, extractor_name)
-        model = GNNClassifier(
-            NUM_NODE_FEATURES,
-            NUM_EDGE_FEATURES,
-            num_classes=len(classes),
-            hidden_dim=model_cfg["hidden_dim"],
-            num_layers=model_cfg["num_layers"],
-            dropout=model_cfg["dropout"],
-        )
+        arch_kwargs = {k: model_cfg[k] for k in ("hidden_dim", "num_layers", "dropout", "num_heads") if k in model_cfg}
+        if kind == "gnn":
+            model = GNNClassifier(NUM_NODE_FEATURES, NUM_EDGE_FEATURES, num_classes=len(classes), **arch_kwargs)
+        elif kind == "settransformer":
+            model = SetTransformerClassifier(NUM_NODE_FEATURES, num_classes=len(classes), **arch_kwargs)
+        else:
+            model = BagClassifier(num_classes=len(classes), **arch_kwargs)
         forward_fn = gnn_forward
         augment_record = None
         # Extraction quality on the same primitives the model is scored on.
@@ -234,10 +282,10 @@ def run_one(
             datasets["test"], max_samples=cfg.get("extractor_eval_samples", 200)
         )
     else:
-        raise ValueError(f"unknown model kind {kind!r}; known: cnn, gnn")
+        raise ValueError(f"unknown model kind {kind!r}; known: cnn, {', '.join(GRAPH_MODELS)}")
 
     n_params = sum(p.numel() for p in model.parameters())
-    params = train_params(model_cfg, cfg)
+    params = train_params(model_cfg, cfg, n_train)
     result = train_classifier(
         model,
         forward_fn,
@@ -318,10 +366,7 @@ def main() -> None:
     if args.verbose:
         cfg["verbose"] = True
 
-    model_configs = {
-        "cnn": load_yaml(REPO_ROOT / args.cnn_config),
-        "gnn": load_yaml(REPO_ROOT / args.gnn_config),
-    }
+    model_configs = ModelConfigs({"cnn": args.cnn_config, "gnn": args.gnn_config})
 
     classes = cfg.get("classes") or list(CLASS_NAMES)
     seeds = args.seeds if args.seeds is not None else cfg.get("seeds", [0, 1, 2])
