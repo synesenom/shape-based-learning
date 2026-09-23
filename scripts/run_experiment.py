@@ -50,6 +50,7 @@ from shapeprim.evaluate import (  # noqa: E402
     confusion_pairs,
     evaluate_extractor,
     format_aggregate_table,
+    predictions,
     per_class_accuracy,
 )
 from shapeprim.experiment import (  # noqa: E402
@@ -371,6 +372,13 @@ def run_one(
         "augment": augment_record,
         "train_params": params,
         "device": device,
+    }
+    # Per-sample predictions on every test set, in dataset order: the
+    # cross-phase figure and failure analyses read individual examples.
+    record["predictions"] = {
+        name: predictions(model, forward_fn, loader, device)
+        for name, loader in loaders.items()
+        if name.startswith("test")
     }
     for name, loader in loaders.items():
         if name.startswith("test__"):
