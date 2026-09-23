@@ -27,7 +27,7 @@ width: 32
 threshold: 0.3
 threads: 4
 seed: 0
-weights: data/models/learned_appearance.pt
+weights: results/phase3/learned_extractor_appearance/learned_appearance.pt
 report: results/phase3/learned_extractor_appearance/summary.json
 eval_conditions:
   flat: {view_angle_range: [0, 30]}

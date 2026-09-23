@@ -49,5 +49,5 @@ models:
   - {name: cnn_probe, kind: cnn, model_config: cnn_probe, augment: none}
   - {name: gnn_oracle, kind: gnn, extractor: oracle}
   - {name: gnn_classical, kind: gnn, extractor: classical_v2}
-  - {name: gnn_learned, kind: gnn, extractor: learned, extractor_weights: data/models/learned_phase2_0-30.pt}
-  - {name: gnn_learned_app, kind: gnn, extractor: learned, extractor_weights: data/models/learned_appearance.pt}
+  - {name: gnn_learned, kind: gnn, extractor: learned, extractor_weights: results/phase2/learned_extractor/learned_phase2_0-30.pt}
+  - {name: gnn_learned_app, kind: gnn, extractor: learned, extractor_weights: results/phase3/learned_extractor_appearance/learned_appearance.pt}

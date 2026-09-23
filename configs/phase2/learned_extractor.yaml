@@ -16,7 +16,7 @@ width: 32
 threshold: 0.3
 threads: 2
 seed: 0
-weights: data/models/learned_phase2_0-30.pt
+weights: results/phase2/learned_extractor/learned_phase2_0-30.pt
 report: results/phase2/learned_extractor/summary.json
 eval_conditions:
   frontal: {view_angle_range: [0, 0.001]}

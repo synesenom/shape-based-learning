@@ -44,7 +44,7 @@ models:
   - {name: gnn_oracle_affine, kind: gnn, extractor: oracle, graph_frame: affine}
   - {name: gnn_classical, kind: gnn, extractor: classical_v2}
   - {name: gnn_classical_affine, kind: gnn, extractor: classical_v2, graph_frame: affine}
-  - {name: gnn_learned, kind: gnn, extractor: learned, extractor_weights: data/models/learned_phase2_0-30.pt}
-  - {name: gnn_learned_affine, kind: gnn, extractor: learned, extractor_weights: data/models/learned_phase2_0-30.pt, graph_frame: affine}
+  - {name: gnn_learned, kind: gnn, extractor: learned, extractor_weights: results/phase2/learned_extractor/learned_phase2_0-30.pt}
+  - {name: gnn_learned_affine, kind: gnn, extractor: learned, extractor_weights: results/phase2/learned_extractor/learned_phase2_0-30.pt, graph_frame: affine}
   - {name: st_oracle, kind: settransformer, extractor: oracle}
   - {name: bag_oracle, kind: bag, extractor: oracle}

@@ -13,7 +13,7 @@ distilled SAM ViT-B, loaded through ``transformers``), which keeps SAM's
 prompt interface at a fraction of the cost. It is still SAM-family
 segmentation, but not the full model; results are labelled accordingly.
 
-Masks are cached on disk by a digest of the image pixels, so each photo is
+Fitted primitives are cached on disk (committed) by a digest of the image pixels, so each photo is
 segmented once however many runs, seeds and splits use it
 (``scripts/precompute_sam.py`` fills the cache ahead of the experiments).
 """
@@ -36,7 +36,9 @@ from .base import PrimitiveExtractor
 
 MODEL_ID = "Zigeng/SlimSAM-uniform-77"
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CACHE_DIR = REPO_ROOT / "data" / "cache" / "samfit"
+# Under results/, not data/: segmentation is hours of CPU, so the cache is
+# committed and survives the container (it is small JSON per image).
+CACHE_DIR = REPO_ROOT / "results" / "phase3" / "samfit_cache"
 
 
 def _digest(image: Image.Image) -> str:
