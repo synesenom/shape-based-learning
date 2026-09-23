@@ -1,0 +1,55 @@
+# Novel compositions (PLAN.md section 5): train on the base template of
+# every class, test on held-out variants that add or remove a part (a car
+# with three windows, a snowman with a hat, a cat with eyes; see
+# objects.NOVEL_VARIANTS). Arrangement-defining structure is kept, so a
+# person would still name every variant correctly.
+#
+# Validation follows the training distribution (base templates only), so
+# selection never sees a variant. The in-distribution test set is measured
+# on the same seed, so the drop is a paired estimate.
+phase: phase1
+experiment: novel_composition
+
+image_size: 64
+n_train_per_class: 150
+n_val_per_class: 40
+n_test_per_class: 100
+distractor_prob: 0.0
+
+shift:
+  name: novel_composition
+  test:
+    template_set: novel
+
+seeds: [0, 1, 2]
+test_seed: 12345
+epochs: 30
+batch_size: 32
+num_workers: 0
+device: auto
+cache_dir: data/cache
+extractor_eval_samples: 200
+
+models:
+  - name: cnn
+    kind: cnn
+    augment: none
+  - name: cnn_aug
+    kind: cnn
+    augment: standard
+  - name: cnn_probe
+    kind: cnn
+    model_config: cnn_probe
+    augment: none
+  - name: gnn_oracle
+    kind: gnn
+    extractor: oracle
+  - name: gnn_classical
+    kind: gnn
+    extractor: classical
+  - name: st_oracle
+    kind: settransformer
+    extractor: oracle
+  - name: bag_oracle
+    kind: bag
+    extractor: oracle
