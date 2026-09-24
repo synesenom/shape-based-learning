@@ -1,0 +1,253 @@
+{
+  "config": {
+    "experiment": {
+      "phase": "phase2",
+      "experiment": "angle_extrapolation",
+      "image_size": 64,
+      "n_val_per_class": 40,
+      "n_test_per_class": 100,
+      "distractor_prob": 0.0,
+      "camera_distance": 2.5,
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "test_seed": 12345,
+      "batch_size": 32,
+      "num_workers": 0,
+      "device": "auto",
+      "cache_dir": "data/cache",
+      "extractor_eval_samples": 200,
+      "n_train_per_class": 150,
+      "epochs": 40,
+      "shift": {
+        "name": "view_angle",
+        "train": {
+          "view_angle_range": [
+            0,
+            30
+          ]
+        },
+        "test": {
+          "view_angle_range": [
+            50,
+            70
+          ]
+        },
+        "tests": {
+          "angle_30-50": {
+            "view_angle_range": [
+              30,
+              50
+            ]
+          },
+          "angle_00-10": {
+            "view_angle_range": [
+              0,
+              10
+            ]
+          },
+          "angle_10-20": {
+            "view_angle_range": [
+              10,
+              20
+            ]
+          },
+          "angle_20-30": {
+            "view_angle_range": [
+              20,
+              30
+            ]
+          },
+          "angle_30-40": {
+            "view_angle_range": [
+              30,
+              40
+            ]
+          },
+          "angle_40-50": {
+            "view_angle_range": [
+              40,
+              50
+            ]
+          },
+          "angle_50-60": {
+            "view_angle_range": [
+              50,
+              60
+            ]
+          },
+          "angle_60-70": {
+            "view_angle_range": [
+              60,
+              70
+            ]
+          }
+        }
+      },
+      "models": [
+        {
+          "name": "cnn",
+          "kind": "cnn",
+          "augment": "none"
+        },
+        {
+          "name": "cnn_aug",
+          "kind": "cnn",
+          "augment": "standard"
+        },
+        {
+          "name": "cnn_aug_view",
+          "kind": "cnn",
+          "augment": "view"
+        },
+        {
+          "name": "cnn_probe",
+          "kind": "cnn",
+          "model_config": "cnn_probe",
+          "augment": "none"
+        },
+        {
+          "name": "gnn_oracle",
+          "kind": "gnn",
+          "extractor": "oracle"
+        },
+        {
+          "name": "gnn_oracle_affine",
+          "kind": "gnn",
+          "extractor": "oracle",
+          "graph_frame": "affine"
+        },
+        {
+          "name": "gnn_classical",
+          "kind": "gnn",
+          "extractor": "classical_v2"
+        },
+        {
+          "name": "gnn_classical_affine",
+          "kind": "gnn",
+          "extractor": "classical_v2",
+          "graph_frame": "affine"
+        },
+        {
+          "name": "gnn_learned",
+          "kind": "gnn",
+          "extractor": "learned",
+          "extractor_weights": "results/phase2/learned_extractor/learned_phase2_0-30.pt"
+        },
+        {
+          "name": "gnn_learned_affine",
+          "kind": "gnn",
+          "extractor": "learned",
+          "extractor_weights": "results/phase2/learned_extractor/learned_phase2_0-30.pt",
+          "graph_frame": "affine"
+        },
+        {
+          "name": "st_oracle",
+          "kind": "settransformer",
+          "extractor": "oracle"
+        },
+        {
+          "name": "bag_oracle",
+          "kind": "bag",
+          "extractor": "oracle"
+        }
+      ],
+      "min_steps": 500
+    },
+    "model_spec": {
+      "name": "st_oracle",
+      "kind": "settransformer",
+      "extractor": "oracle"
+    },
+    "seed": 1,
+    "n_train_per_class": 150,
+    "classes": [
+      "bicycle",
+      "car",
+      "truck",
+      "cat_face",
+      "house",
+      "tree",
+      "arrow_sign",
+      "snowman",
+      "person",
+      "fish"
+    ],
+    "condition": {
+      "name": "view_angle",
+      "is_shift": true,
+      "changed": {
+        "view_angle_range": {
+          "train": [
+            0.0,
+            30.0
+          ],
+          "test": [
+            50.0,
+            70.0
+          ]
+        }
+      },
+      "extra_tests": {
+        "angle_30-50": {
+          "view_angle_range": [
+            30.0,
+            50.0
+          ]
+        },
+        "angle_00-10": {
+          "view_angle_range": [
+            0.0,
+            10.0
+          ]
+        },
+        "angle_10-20": {
+          "view_angle_range": [
+            10.0,
+            20.0
+          ]
+        },
+        "angle_20-30": {
+          "view_angle_range": [
+            20.0,
+            30.0
+          ]
+        },
+        "angle_30-40": {
+          "view_angle_range": [
+            30.0,
+            40.0
+          ]
+        },
+        "angle_40-50": {
+          "view_angle_range": [
+            40.0,
+            50.0
+          ]
+        },
+        "angle_50-60": {
+          "view_angle_range": [
+            50.0,
+            60.0
+          ]
+        },
+        "angle_60-70": {
+          "view_angle_range": [
+            60.0,
+            70.0
+          ]
+        }
+      }
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "timestamp_utc": "2026-09-24T22:09:01+00:00",
+    "git_commit": "e3c286c36380285be195eefe390118bea05b5e4f",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false
+  }
+}
