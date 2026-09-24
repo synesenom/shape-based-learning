@@ -15,7 +15,7 @@
   "epochs_run": 16,
   "steps": 512,
   "stopped_early": true,
-  "train_seconds": 3011.9963898658752,
+  "train_seconds": 2997.444743871689,
   "n_parameters": 11173962,
   "twin_test_acc": 1.0,
   "per_class_acc": {
