@@ -70,6 +70,14 @@ rule is a no-op for models without BN (every graph model) and leaves
 frozen BN alone (the ImageNet linear probe). CNN runs recorded before it
 were moved to `results/<phase>/superseded_no_precise_bn/` and re-run.
 
+**3d. Validation cadence.** A run validates at most about 60 times
+(`max_evals`): every `ceil(epochs / 60)` epochs and on the last one, with
+patience still counted in epochs. The step floor makes a 5-per-class run
+~250 epochs long, and validating after each of them (plus the precise-BN
+pass) cost ~10x the training itself (11 minutes per run). The first three
+5-per-class CNN runs of the learning curve, validated every epoch, are in
+`results/phase1/superseded_eval_every/`.
+
 **4. The same protocol on both sides.** The CNN and the GNN get the same
 schedule, warm-up, clipping, stopping rule and selection criterion. An
 advantage produced by tuning one side is exactly the artefact this

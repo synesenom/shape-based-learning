@@ -190,6 +190,7 @@ def train_classifier(
     verbose: bool = False,
     min_steps: int = 0,
     precise_bn: bool = True,
+    max_evals: Optional[int] = None,
 ) -> TrainResult:
     """Train on ``train_loader``, select on ``val_loader``.
 
@@ -203,7 +204,13 @@ def train_classifier(
     augmented CNN, and it ended runs at 0.43 in-distribution accuracy
     while the cosine learning rate was still near its peak. The floor is
     expressed in steps so it is the same for every model (the caller also
-    raises ``epochs`` so the run can reach it; see ``epochs_for``). The test set is the caller's business and
+    raises ``epochs`` so the run can reach it; see ``epochs_for``).
+
+    ``max_evals``: validate at most about this many times. A 5-per-class
+    run needs ~250 epochs to reach ``min_steps``, and validating (plus the
+    precise-BN pass) after each of them cost ~10x the training itself. With
+    a cap, validation runs every ``ceil(epochs / max_evals)`` epochs and on
+    the last epoch; patience still counts epochs. The test set is the caller's business and
     must be touched exactly once, after this returns.
     """
     device = resolve_device(device)
@@ -217,6 +224,7 @@ def train_classifier(
     best_state: Optional[Dict[str, torch.Tensor]] = None
     epochs_since_improvement = 0
     steps = 0
+    eval_every = max(1, math.ceil(epochs / max_evals)) if max_evals else 1
     t0 = time.time()
 
     for epoch in range(epochs):
@@ -234,6 +242,11 @@ def train_classifier(
             total_loss += loss.item() * labels.size(0)
             n += labels.size(0)
         train_loss = total_loss / n if n else 0.0
+        result.epochs_run = epoch + 1
+        result.steps = steps
+        if (epoch + 1) % eval_every != 0 and epoch != epochs - 1:
+            scheduler.step()
+            continue
 
         if precise_bn:
             # Statistics from the training distribution (augmented, if the
@@ -263,7 +276,7 @@ def train_classifier(
             if restore_best:
                 best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
         else:
-            epochs_since_improvement += 1
+            epochs_since_improvement += eval_every
 
         if verbose:
             print(

@@ -258,6 +258,8 @@ def train_params(model_cfg: dict, cfg: dict, n_train: Optional[int] = None, step
         # Protocol rule 3c: BN statistics re-estimated on the training data
         # before every validation pass (no-op for models without BN).
         "precise_bn": cfg.get("precise_bn", True),
+        # Validate at most ~max_evals times per run (long small-n runs).
+        "max_evals": cfg.get("max_evals", 60),
         "lr": model_cfg["lr"],
         "weight_decay": model_cfg.get("weight_decay", 0.0),
         "optimizer": model_cfg.get("optimizer", "adam"),

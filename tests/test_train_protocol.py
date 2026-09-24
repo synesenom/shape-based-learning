@@ -203,3 +203,17 @@ def test_precise_bn_reestimates_trainable_stats_and_skips_frozen():
     before = net[1].running_mean.clone()
     assert not recalibrate_batchnorm(net, cnn_forward, DataLoader(TensorDataset(x * 0, torch.zeros(16, dtype=torch.long)), batch_size=8), "cpu")
     assert torch.equal(net[1].running_mean, before)
+
+
+def test_max_evals_caps_validation_passes():
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
+
+    from shapeprim.train import cnn_forward, train_classifier
+
+    x = torch.randn(8, 3, 4, 4)
+    loader = DataLoader(TensorDataset(x, torch.zeros(8, dtype=torch.long)), batch_size=4)
+    model = torch.nn.Sequential(torch.nn.Flatten(), torch.nn.Linear(48, 2))
+    res = train_classifier(model, cnn_forward, loader, loader, epochs=100, lr=1e-3, max_evals=10)
+    assert len(res.history) == 10 and res.epochs_run == 100 and res.steps == 200
+    assert res.history[-1]["epoch"] == 99
