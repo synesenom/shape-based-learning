@@ -79,7 +79,14 @@ def bins_for(per_model: Dict[str, dict], prefix: str) -> List[Tuple[str, float, 
             m = pat.match(key)
             if m:
                 found[m.group(1)] = (float(m.group(2)), float(m.group(3)))
-    return sorted(((k, lo, hi) for k, (lo, hi) in found.items()), key=lambda b: b[1])
+    bins = sorted(((k, lo, hi) for k, (lo, hi) in found.items()), key=lambda b: b[1])
+    # Keep one tiling of the axis: drop wider summary bins (e.g. 30-50
+    # next to 30-40 and 40-50), which the table still lists.
+    if bins:
+        widths = [hi - lo for _, lo, hi in bins]
+        common = max(set(widths), key=widths.count)
+        bins = [b for b in bins if b[2] - b[1] == common]
+    return bins
 
 
 def _mean_ci(entry: Optional[dict]) -> Tuple[Optional[float], float]:
@@ -101,7 +108,7 @@ def plot_one(per_model, bins, groups, train_range, xlabel, title, out_path, show
         _style_axes(ax)
         if train_range:
             ax.axvspan(*train_range, color=GRID, alpha=0.6, zorder=0, linewidth=0)
-            ax.annotate("trained here", xy=(sum(train_range) / 2, 1.0), ha="center", va="top",
+            ax.annotate("trained here", xy=(sum(train_range) / 2, 0.02), ha="center", va="bottom",
                         color=TEXT_SECONDARY, fontsize=8)
         ends = []
         for i, m in enumerate(models):
@@ -154,6 +161,17 @@ def plot_one(per_model, bins, groups, train_range, xlabel, title, out_path, show
     fig.tight_layout()
     fig.savefig(out_path, facecolor=SURFACE)
     plt.close(fig)
+
+
+def all_bins(per_model: Dict[str, dict], prefix: str) -> List[Tuple[str, float, float]]:
+    pat = re.compile(rf"^test_acc__({re.escape(prefix)}_(\d+)-(\d+))$")
+    found = {}
+    for agg in per_model.values():
+        for key in agg:
+            m = pat.match(key)
+            if m:
+                found[m.group(1)] = (float(m.group(2)), float(m.group(3)))
+    return sorted(((k, lo, hi) for k, (lo, hi) in found.items()), key=lambda b: (b[1], b[2]))
 
 
 def write_table(per_model, bins, n, lines: List[str]) -> None:
@@ -214,7 +232,7 @@ def main() -> None:
             out, show_f1=any("extractor_f1__" in k for a in per_model.values() for k in a),
         )
         print(f"Wrote {out}")
-        write_table(per_model, bins, n_key, lines)
+        write_table(per_model, all_bins(per_model, args.prefix), n_key, lines)
     md = path.parent / f"{stem}.md"
     md.write_text("\n".join(lines))
     print(f"Wrote {md}")
