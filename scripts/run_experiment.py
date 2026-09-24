@@ -227,7 +227,7 @@ def make_loaders_graph(
     return loaders, datasets
 
 
-def epochs_for(model_cfg: dict, cfg: dict, n_train: Optional[int]) -> int:
+def epochs_for(model_cfg: dict, cfg: dict, n_train: Optional[int], steps_per_epoch: Optional[int] = None) -> int:
     """Epoch budget, optionally shrunk for large training sets.
 
     ``epochs_by_n`` maps a training-set size to an epoch cap. An epoch at
@@ -242,13 +242,24 @@ def epochs_for(model_cfg: dict, cfg: dict, n_train: Optional[int]) -> int:
         applicable = [int(v) for k, v in caps.items() if n_train >= int(k)]
         if applicable:
             epochs = min(epochs, min(applicable))
+    # A floor in optimizer steps (min_steps): tiny training sets get enough
+    # epochs to reach it, so every run trains for at least that many steps.
+    min_steps = cfg.get("min_steps", 0)
+    if min_steps and steps_per_epoch:
+        epochs = max(epochs, -(-min_steps // steps_per_epoch))
     return epochs
 
 
-def train_params(model_cfg: dict, cfg: dict, n_train: Optional[int] = None) -> dict:
+def train_params(model_cfg: dict, cfg: dict, n_train: Optional[int] = None, steps_per_epoch: Optional[int] = None) -> dict:
     """Training hyperparameters, model config overriding experiment defaults."""
     return {
-        "epochs": epochs_for(model_cfg, cfg, n_train),
+        "epochs": epochs_for(model_cfg, cfg, n_train, steps_per_epoch),
+        "min_steps": cfg.get("min_steps", 0),
+        # Protocol rule 3c: BN statistics re-estimated on the training data
+        # before every validation pass (no-op for models without BN).
+        "precise_bn": cfg.get("precise_bn", True),
+        # Validate at most ~max_evals times per run (long small-n runs).
+        "max_evals": cfg.get("max_evals", 60),
         "lr": model_cfg["lr"],
         "weight_decay": model_cfg.get("weight_decay", 0.0),
         "optimizer": model_cfg.get("optimizer", "adam"),
@@ -297,10 +308,11 @@ def run_one(
         augment_record = augment.to_dict()
     elif kind in GRAPH_MODELS:
         loaders, datasets = make_loaders_graph(cfg, condition, classes, seed, n_train, spec)
-        arch_kwargs = {k: model_cfg[k] for k in ("hidden_dim", "num_layers", "dropout", "num_heads") if k in model_cfg}
+        arch_kwargs = {k: model_cfg[k] for k in ("hidden_dim", "num_layers", "dropout", "num_heads", "pooling") if k in model_cfg}
         if kind == "gnn":
             model = GNNClassifier(NUM_NODE_FEATURES, NUM_EDGE_FEATURES, num_classes=len(classes), **arch_kwargs)
         elif kind == "settransformer":
+            arch_kwargs.pop("pooling", None)
             model = SetTransformerClassifier(NUM_NODE_FEATURES, num_classes=len(classes), **arch_kwargs)
         else:
             model = BagClassifier(num_classes=len(classes), **arch_kwargs)
@@ -322,7 +334,7 @@ def run_one(
         raise ValueError(f"unknown model kind {kind!r}; known: cnn, {', '.join(GRAPH_MODELS)}")
 
     n_params = sum(p.numel() for p in model.parameters())
-    params = train_params(model_cfg, cfg, n_train)
+    params = train_params(model_cfg, cfg, n_train, len(loaders["train"]))
     result = train_classifier(
         model,
         forward_fn,
@@ -362,6 +374,7 @@ def run_one(
         "best_val_acc": result.best_val_acc,
         "best_epoch": result.best_epoch,
         "epochs_run": result.epochs_run,
+        "steps": result.steps,
         "stopped_early": result.stopped_early,
         "train_seconds": result.train_seconds,
         "n_parameters": n_params,
@@ -412,6 +425,9 @@ def main() -> None:
     cfg.setdefault("n_val_per_class", cfg.get("n_test_per_class", 40))
     cfg.setdefault("num_workers", 0)
     cfg.setdefault("cache_dir", "data/cache")
+    # Protocol default (docs/experiment_protocol.md, rule 3): at least 500
+    # optimizer steps per run, and no early stopping before them.
+    cfg.setdefault("min_steps", 500)
     if args.verbose:
         cfg["verbose"] = True
 

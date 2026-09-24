@@ -75,6 +75,8 @@ DISPLAY_NAMES = {
     "st_classical": "Set transformer (classical)",
     "bag_oracle": "Bag (oracle)",
     "bag_classical": "Bag (classical)",
+    "gnn_oracle_max": "GNN (oracle, max pool)",
+    "gnn_oracle_attn": "GNN (oracle, attention pool)",
 }
 
 
@@ -127,6 +129,7 @@ def plot_learning_curve(summary: dict, out_path: Path, metric: str = "test_acc")
     conditions = summary["conditions"]
     sizes = sorted(int(k) for k in conditions)
     models = model_order(conditions)
+    ends = []
 
     fig, ax = plt.subplots(figsize=(7.2, 4.6), dpi=200)
     fig.patch.set_facecolor(SURFACE)
@@ -150,17 +153,16 @@ def plot_learning_curve(summary: dict, out_path: Path, metric: str = "test_acc")
         ax.fill_between(xs, los, his, color=color, alpha=0.15, linewidth=0, zorder=2)
         ax.plot(xs, ys, color=color, linewidth=2.0, marker="o", markersize=5,
                 markeredgecolor=SURFACE, markeredgewidth=1.5, zorder=3, label=display_name(model))
-        # Direct label at the right end: identity is never color-alone, and
-        # two of these hues are below the contrast floor on white.
-        ax.annotate(
-            display_name(model),
-            xy=(xs[-1], ys[-1]),
-            xytext=(6, 0),
-            textcoords="offset points",
-            color=TEXT_SECONDARY,
-            fontsize=8,
-            va="center",
-        )
+        ends.append([ys[-1], xs[-1], display_name(model)])
+
+    # Direct labels at the right end, spread downward from the top so
+    # series that coincide (several models at 1.0) stay legible.
+    ends.sort(key=lambda e: -e[0])
+    for j in range(1, len(ends)):
+        ends[j][0] = min(ends[j][0], ends[j - 1][0] - 0.045)
+    for y, x, label in ends:
+        ax.annotate(label, xy=(x, y), xytext=(6, 0), textcoords="offset points",
+                    color=TEXT_SECONDARY, fontsize=8, va="center", annotation_clip=False)
 
     ax.set_xscale("log")
     ax.set_xticks(sizes)
@@ -259,7 +261,7 @@ def plot_shift(summary: dict, out_path: Path) -> None:
         if _value(per_model.get(m, {}).get("test_acc")) is not None
     ]
 
-    fig, ax = plt.subplots(figsize=(8.0, 4.6), dpi=200)
+    fig, ax = plt.subplots(figsize=(max(8.0, 1.15 * len(models) + 2), 5.2), dpi=200)
     fig.patch.set_facecolor(SURFACE)
     _style_axes(ax)
     ax.grid(True, axis="y", color=GRID, linewidth=0.8)
@@ -287,15 +289,14 @@ def plot_shift(summary: dict, out_path: Path) -> None:
 
         drop = _value(agg.get("shift_drop"))
         if drop is not None:
-            ax.annotate(f"drop {drop:+.3f}", xy=(i, 0), xytext=(0, -28),
-                        textcoords="offset points", ha="center",
-                        color=TEXT_SECONDARY, fontsize=8)
+            ax.annotate(f"drop\n{drop:+.3f}", xy=(i, 1.2), ha="center", va="bottom",
+                        color=TEXT_SECONDARY, fontsize=7.5)
 
     ax.set_xticks(range(len(models)))
-    ax.set_xticklabels([display_name(m) for m in models], fontsize=9, color=TEXT_SECONDARY)
-    ax.tick_params(axis="x", pad=18)
+    ax.set_xticklabels([display_name(m) for m in models], fontsize=8.5, color=TEXT_SECONDARY,
+                       rotation=25, ha="right", rotation_mode="anchor")
     ax.set_ylabel("test accuracy", color=TEXT_SECONDARY, fontsize=10)
-    ax.set_ylim(0, 1.27)
+    ax.set_ylim(0, 1.36)
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
     cond = summary.get("condition", {})
     n_seeds = len(summary.get("seeds", []))
@@ -303,7 +304,7 @@ def plot_shift(summary: dict, out_path: Path) -> None:
         f"Shift: {cond.get('name', '?')} ({n_seeds} seeds, bars = 95% CI)",
         color=TEXT_PRIMARY, fontsize=12, pad=12, loc="left",
     )
-    legend = ax.legend(frameon=False, fontsize=9, loc="lower right", ncol=2)
+    legend = ax.legend(frameon=False, fontsize=9, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2)
     for text in legend.get_texts():
         text.set_color(TEXT_SECONDARY)
     fig.tight_layout()

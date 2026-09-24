@@ -65,6 +65,7 @@ class TrainResult:
     epochs_run: int = 0
     train_seconds: float = 0.0
     stopped_early: bool = False
+    steps: int = 0
 
     @property
     def final_train_loss(self) -> float:
@@ -98,6 +99,38 @@ def evaluate_loss_and_accuracy(
     if not total:
         return float("nan"), 0.0
     return loss_sum / total, correct / total
+
+
+@torch.no_grad()
+def recalibrate_batchnorm(model: torch.nn.Module, forward_fn: ForwardFn, loader: DataLoader, device: str) -> bool:
+    """Re-estimate trainable BatchNorm statistics with one pass over ``loader``.
+
+    "Precise BN" (Wu & Johnson 2021, "Rethinking 'Batch' in BatchNorm").
+    Running averages with momentum 0.1 lag behind weights that are still
+    moving, and under augmentation the lag made a from-scratch ResNet's
+    eval-mode validation accuracy swing between 0.10 and 1.00 from one
+    epoch to the next while the same weights with re-estimated statistics
+    scored 0.91-1.00 every epoch. Frozen BN layers (a linear probe's
+    ImageNet statistics) are left alone. Returns whether anything was done.
+    """
+    bns = [
+        m for m in model.modules()
+        if isinstance(m, torch.nn.modules.batchnorm._BatchNorm) and m.weight is not None and m.weight.requires_grad
+    ]
+    if not bns:
+        return False
+    was_training = model.training
+    momenta = [bn.momentum for bn in bns]
+    for bn in bns:
+        bn.reset_running_stats()
+        bn.momentum = None  # cumulative average over the pass
+    model.train()
+    for batch in loader:
+        forward_fn(model, batch, device)
+    for bn, mom in zip(bns, momenta):
+        bn.momentum = mom
+    model.train(was_training)
+    return True
 
 
 def build_optimizer(
@@ -155,11 +188,29 @@ def train_classifier(
     grad_clip: Optional[float] = None,
     restore_best: bool = True,
     verbose: bool = False,
+    min_steps: int = 0,
+    precise_bn: bool = True,
+    max_evals: Optional[int] = None,
 ) -> TrainResult:
     """Train on ``train_loader``, select on ``val_loader``.
 
     The returned model has the best-validation weights loaded (unless
-    ``restore_best`` is False). The test set is the caller's business and
+    ``restore_best`` is False).
+
+    ``min_steps``: early stopping may not fire before this many optimizer
+    steps. Patience counted in epochs means very different things at 5
+    and at 1000 examples per class: at 25/class (8 steps per epoch) a
+    patience of 8 epochs is 64 steps, shorter than the noisy start of an
+    augmented CNN, and it ended runs at 0.43 in-distribution accuracy
+    while the cosine learning rate was still near its peak. The floor is
+    expressed in steps so it is the same for every model (the caller also
+    raises ``epochs`` so the run can reach it; see ``epochs_for``).
+
+    ``max_evals``: validate at most about this many times. A 5-per-class
+    run needs ~250 epochs to reach ``min_steps``, and validating (plus the
+    precise-BN pass) after each of them cost ~10x the training itself. With
+    a cap, validation runs every ``ceil(epochs / max_evals)`` epochs and on
+    the last epoch; patience still counts epochs. The test set is the caller's business and
     must be touched exactly once, after this returns.
     """
     device = resolve_device(device)
@@ -172,6 +223,8 @@ def train_classifier(
     result = TrainResult()
     best_state: Optional[Dict[str, torch.Tensor]] = None
     epochs_since_improvement = 0
+    steps = 0
+    eval_every = max(1, math.ceil(epochs / max_evals)) if max_evals else 1
     t0 = time.time()
 
     for epoch in range(epochs):
@@ -185,9 +238,20 @@ def train_classifier(
             if grad_clip:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             opt.step()
+            steps += 1
             total_loss += loss.item() * labels.size(0)
             n += labels.size(0)
         train_loss = total_loss / n if n else 0.0
+        result.epochs_run = epoch + 1
+        result.steps = steps
+        if (epoch + 1) % eval_every != 0 and epoch != epochs - 1:
+            scheduler.step()
+            continue
+
+        if precise_bn:
+            # Statistics from the training distribution (augmented, if the
+            # loader augments), never from validation data.
+            recalibrate_batchnorm(model, forward_fn, train_loader, device)
 
         val_loss, val_acc = evaluate_loss_and_accuracy(model, forward_fn, val_loader, device)
         current_lr = opt.param_groups[0]["lr"]
@@ -203,6 +267,7 @@ def train_classifier(
             }
         )
         result.epochs_run = epoch + 1
+        result.steps = steps
 
         if val_acc > result.best_val_acc:
             result.best_val_acc = val_acc
@@ -211,7 +276,7 @@ def train_classifier(
             if restore_best:
                 best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
         else:
-            epochs_since_improvement += 1
+            epochs_since_improvement += eval_every
 
         if verbose:
             print(
@@ -219,7 +284,11 @@ def train_classifier(
                 flush=True,
             )
 
-        if early_stopping_patience is not None and epochs_since_improvement >= early_stopping_patience:
+        if (
+            early_stopping_patience is not None
+            and epochs_since_improvement >= early_stopping_patience
+            and steps >= min_steps
+        ):
             result.stopped_early = True
             break
 

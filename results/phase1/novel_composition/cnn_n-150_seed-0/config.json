@@ -63,7 +63,8 @@
           "kind": "bag",
           "extractor": "oracle"
         }
-      ]
+      ],
+      "min_steps": 500
     },
     "model_spec": {
       "name": "cnn",
@@ -98,8 +99,8 @@
   "environment": {
     "python": "3.11.15",
     "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
-    "timestamp_utc": "2026-09-23T18:27:07+00:00",
-    "git_commit": "790e7abd4c21356d2ad821eced6c19a713845c4f",
+    "timestamp_utc": "2026-09-23T23:25:24+00:00",
+    "git_commit": "fba396fb7e6c6312d969cf7c98e4dedb5b62916b",
     "torch": "2.14.0+cpu",
     "cuda_available": false
   }

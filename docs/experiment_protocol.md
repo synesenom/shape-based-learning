@@ -47,6 +47,37 @@ validation. The first recorded comparison used bare Adam at 1e-3 with no
 schedule and its accuracy collapsed to 0.18 and 0.61 at two points before
 recovering; a last-epoch number from that curve measures luck.
 
+**3b. A floor in optimizer steps.** Every run trains for at least 500
+optimizer steps (`min_steps`; small training sets get more epochs to reach
+it) and early stopping may not fire before them. Patience counted in
+epochs means very different amounts of training at 5 and at 1000 examples
+per class: at 25/class a patience of 8 epochs is 64 steps, shorter than
+the noisy start of an augmented CNN, and it ended runs at 0.43
+in-distribution accuracy while the learning rate was still near its peak.
+Runs recorded before this rule that stopped earlier were moved to
+`results/<phase>/superseded_patience8/` and re-run
+(`scripts/supersede_short_runs.py`); runs that trained past the floor are
+unaffected by it.
+
+**3c. Precise BatchNorm statistics.** Before every validation pass, the
+BatchNorm statistics of every trainable BN layer are re-estimated with one
+no-grad pass over the training data, augmentation included (Wu & Johnson
+2021). With the default running averages, augmented from-scratch ResNets
+swung between 0.10 and 1.00 validation accuracy from one epoch to the
+next, so model selection kept stopping on a stale-statistics dip; the same
+weights with re-estimated statistics scored 0.91-1.00 every epoch. The
+rule is a no-op for models without BN (every graph model) and leaves
+frozen BN alone (the ImageNet linear probe). CNN runs recorded before it
+were moved to `results/<phase>/superseded_no_precise_bn/` and re-run.
+
+**3d. Validation cadence.** A run validates at most about 60 times
+(`max_evals`): every `ceil(epochs / 60)` epochs and on the last one, with
+patience still counted in epochs. The step floor makes a 5-per-class run
+~250 epochs long, and validating after each of them (plus the precise-BN
+pass) cost ~10x the training itself (11 minutes per run). The first three
+5-per-class CNN runs of the learning curve, validated every epoch, are in
+`results/phase1/superseded_eval_every/`.
+
 **4. The same protocol on both sides.** The CNN and the GNN get the same
 schedule, warm-up, clipping, stopping rule and selection criterion. An
 advantage produced by tuning one side is exactly the artefact this
