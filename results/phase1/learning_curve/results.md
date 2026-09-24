@@ -16,7 +16,7 @@ Intervals are Student-t 95% confidence intervals over seeds (t = 4.303 at 3 seed
 | ImageNet fine-tune | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | - | 266 ± 7 | 11,181,642 |
 | Set transformer (oracle) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 6 ± 1 | 89,290 |
 | Bag (oracle) | 0.898 ± 0.009 | 0.914 ± 0.040 | 0.490 ± 0.043 | 1.000 ± 0.000 | 1 ± 0 | 5,642 |
-| gnn_oracle_max | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 4 ± 1 | 57,549 |
+| GNN (oracle, max pool) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 4 ± 1 | 57,549 |
 
 ## 10 training examples per class
 
@@ -30,7 +30,7 @@ Intervals are Student-t 95% confidence intervals over seeds (t = 4.303 at 3 seed
 | ImageNet fine-tune | 0.999 ± 0.003 | 1.000 ± 0.000 | 1.000 ± 0.000 | - | 269 ± 13 | 11,181,642 |
 | Set transformer (oracle) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 5 ± 1 | 89,290 |
 | Bag (oracle) | 0.899 ± 0.003 | 0.901 ± 0.004 | 0.497 ± 0.014 | 1.000 ± 0.000 | 1 ± 0 | 5,642 |
-| gnn_oracle_max | 0.999 ± 0.006 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 3 ± 0 | 57,549 |
+| GNN (oracle, max pool) | 0.999 ± 0.006 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 3 ± 0 | 57,549 |
 
 ## 25 training examples per class
 
@@ -44,7 +44,7 @@ Intervals are Student-t 95% confidence intervals over seeds (t = 4.303 at 3 seed
 | ImageNet fine-tune | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | - | 298 ± 9 | 11,181,642 |
 | Set transformer (oracle) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 5 ± 0 | 89,290 |
 | Bag (oracle) | 0.895 ± 0.004 | 0.914 ± 0.039 | 0.475 ± 0.022 | 1.000 ± 0.000 | 1 ± 0 | 5,642 |
-| gnn_oracle_max | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 4 ± 0 | 57,549 |
+| GNN (oracle, max pool) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 4 ± 0 | 57,549 |
 
 ## 50 training examples per class
 
@@ -58,7 +58,7 @@ Intervals are Student-t 95% confidence intervals over seeds (t = 4.303 at 3 seed
 | ImageNet fine-tune | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | - | 339 ± 8 | 11,181,642 |
 | Set transformer (oracle) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 6 ± 1 | 89,290 |
 | Bag (oracle) | 0.899 ± 0.003 | 0.909 ± 0.034 | 0.493 ± 0.014 | 1.000 ± 0.000 | 1 ± 0 | 5,642 |
-| gnn_oracle_max | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 4 ± 0 | 57,549 |
+| GNN (oracle, max pool) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 4 ± 0 | 57,549 |
 
 ## 100 training examples per class
 
@@ -72,7 +72,7 @@ Intervals are Student-t 95% confidence intervals over seeds (t = 4.303 at 3 seed
 | ImageNet fine-tune | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | - | 321 ± 4 | 11,181,642 |
 | Set transformer (oracle) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 5 ± 1 | 89,290 |
 | Bag (oracle) | 0.899 ± 0.006 | 0.907 ± 0.032 | 0.493 ± 0.029 | 1.000 ± 0.000 | 1 ± 0 | 5,642 |
-| gnn_oracle_max | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 3 ± 0 | 57,549 |
+| GNN (oracle, max pool) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 3 ± 0 | 57,549 |
 
 ## 1000 training examples per class
 
@@ -86,4 +86,4 @@ Intervals are Student-t 95% confidence intervals over seeds (t = 4.303 at 3 seed
 | ImageNet fine-tune | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | - | 3151 ± 382 | 11,181,642 |
 | Set transformer (oracle) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 27 ± 3 | 89,290 |
 | Bag (oracle) | 0.900 ± 0.000 | 0.900 ± 0.000 | 0.500 ± 0.000 | 1.000 ± 0.000 | 7 ± 1 | 5,642 |
-| gnn_oracle_max | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 21 ± 3 | 57,549 |
+| GNN (oracle, max pool) | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.000 ± 0.000 | 21 ± 3 | 57,549 |
