@@ -1,0 +1,162 @@
+{
+  "config": {
+    "experiment": {
+      "phase": "phase2",
+      "experiment": "relation_rotation",
+      "image_size": 64,
+      "n_val_per_class": 40,
+      "n_test_per_class": 100,
+      "distractor_prob": 0.0,
+      "camera_distance": 2.5,
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "test_seed": 12345,
+      "batch_size": 32,
+      "num_workers": 0,
+      "device": "auto",
+      "cache_dir": "data/cache",
+      "extractor_eval_samples": 200,
+      "n_train_per_class": 150,
+      "epochs": 40,
+      "view_angle_range": [
+        0,
+        30
+      ],
+      "shift": {
+        "name": "rotation",
+        "train": {
+          "rotation_range": [
+            0,
+            30
+          ]
+        },
+        "test": {
+          "rotation_range": [
+            60,
+            90
+          ]
+        },
+        "tests": {
+          "rot_00-30": {
+            "rotation_range": [
+              0,
+              30
+            ]
+          },
+          "rot_30-60": {
+            "rotation_range": [
+              30,
+              60
+            ]
+          },
+          "rot_60-90": {
+            "rotation_range": [
+              60,
+              90
+            ]
+          }
+        }
+      },
+      "models": [
+        {
+          "name": "cnn",
+          "kind": "cnn",
+          "augment": "none"
+        },
+        {
+          "name": "cnn_aug_view_rot",
+          "kind": "cnn",
+          "augment": "view_rot"
+        },
+        {
+          "name": "gnn_oracle",
+          "kind": "gnn",
+          "extractor": "oracle"
+        },
+        {
+          "name": "gnn_oracle_affine",
+          "kind": "gnn",
+          "extractor": "oracle",
+          "graph_frame": "affine"
+        },
+        {
+          "name": "gnn_classical",
+          "kind": "gnn",
+          "extractor": "classical_v2"
+        },
+        {
+          "name": "st_oracle",
+          "kind": "settransformer",
+          "extractor": "oracle"
+        },
+        {
+          "name": "bag_oracle",
+          "kind": "bag",
+          "extractor": "oracle"
+        }
+      ],
+      "min_steps": 500
+    },
+    "model_spec": {
+      "name": "st_oracle",
+      "kind": "settransformer",
+      "extractor": "oracle"
+    },
+    "seed": 1,
+    "n_train_per_class": 150,
+    "classes": [
+      "bicycle",
+      "car",
+      "truck",
+      "cat_face",
+      "house",
+      "tree",
+      "arrow_sign",
+      "snowman",
+      "person",
+      "fish"
+    ],
+    "condition": {
+      "name": "rotation",
+      "is_shift": true,
+      "changed": {
+        "rotation_range": {
+          "train": [
+            0.0,
+            30.0
+          ],
+          "test": [
+            60.0,
+            90.0
+          ]
+        }
+      },
+      "extra_tests": {
+        "rot_00-30": {},
+        "rot_30-60": {
+          "rotation_range": [
+            30.0,
+            60.0
+          ]
+        },
+        "rot_60-90": {
+          "rotation_range": [
+            60.0,
+            90.0
+          ]
+        }
+      }
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "timestamp_utc": "2026-09-24T23:00:03+00:00",
+    "git_commit": "530ea77f457e3f9e54ec5ee498cde98476ada160",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false
+  }
+}
