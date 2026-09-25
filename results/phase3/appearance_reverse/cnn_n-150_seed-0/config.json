@@ -1,0 +1,166 @@
+{
+  "config": {
+    "experiment": {
+      "phase": "phase3",
+      "experiment": "appearance_reverse",
+      "image_size": 64,
+      "n_train_per_class": 150,
+      "n_val_per_class": 40,
+      "n_test_per_class": 100,
+      "distractor_prob": 0.0,
+      "view_angle_range": [
+        0,
+        30
+      ],
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "test_seed": 12345,
+      "epochs": 40,
+      "batch_size": 32,
+      "num_workers": 0,
+      "device": "auto",
+      "cache_dir": "data/cache",
+      "extractor_eval_samples": 200,
+      "shift": {
+        "name": "appearance_reverse",
+        "train": {
+          "texture": [
+            "flat",
+            "noise",
+            "stripes",
+            "dots",
+            "photo"
+          ],
+          "palette": "seen",
+          "clutter": true,
+          "occlusion_range": [
+            0.0,
+            0.3
+          ]
+        },
+        "test": {},
+        "tests": {
+          "rev_unseen_palette": {
+            "texture": [
+              "flat",
+              "noise",
+              "stripes",
+              "dots",
+              "photo"
+            ],
+            "palette": "unseen",
+            "clutter": true,
+            "occlusion_range": [
+              0.0,
+              0.3
+            ]
+          }
+        }
+      },
+      "models": [
+        {
+          "name": "cnn",
+          "kind": "cnn",
+          "augment": "none"
+        },
+        {
+          "name": "cnn_aug_color",
+          "kind": "cnn",
+          "augment": "appearance"
+        },
+        {
+          "name": "cnn_probe",
+          "kind": "cnn",
+          "model_config": "cnn_probe",
+          "augment": "none"
+        },
+        {
+          "name": "gnn_oracle",
+          "kind": "gnn",
+          "extractor": "oracle"
+        },
+        {
+          "name": "gnn_classical",
+          "kind": "gnn",
+          "extractor": "classical_v2"
+        },
+        {
+          "name": "gnn_learned_app",
+          "kind": "gnn",
+          "extractor": "learned",
+          "extractor_weights": "results/phase3/learned_extractor_appearance/learned_appearance.pt"
+        }
+      ],
+      "min_steps": 500
+    },
+    "model_spec": {
+      "name": "cnn",
+      "kind": "cnn",
+      "augment": "none"
+    },
+    "seed": 0,
+    "n_train_per_class": 150,
+    "classes": [
+      "bicycle",
+      "car",
+      "truck",
+      "cat_face",
+      "house",
+      "tree",
+      "arrow_sign",
+      "snowman",
+      "person",
+      "fish"
+    ],
+    "condition": {
+      "name": "appearance_reverse",
+      "is_shift": true,
+      "changed": {
+        "texture": {
+          "train": [
+            "flat",
+            "noise",
+            "stripes",
+            "dots",
+            "photo"
+          ],
+          "test": "flat"
+        },
+        "palette": {
+          "train": "seen",
+          "test": "default"
+        },
+        "clutter": {
+          "train": true,
+          "test": false
+        },
+        "occlusion_range": {
+          "train": [
+            0.0,
+            0.3
+          ],
+          "test": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "extra_tests": {
+        "rev_unseen_palette": {
+          "palette": "unseen"
+        }
+      }
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "timestamp_utc": "2026-09-25T06:05:00+00:00",
+    "git_commit": "9628a4a620b35a88b976fe17129f3cdf79152b34",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false
+  }
+}

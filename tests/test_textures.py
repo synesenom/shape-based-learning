@@ -54,3 +54,21 @@ def test_occlusion_covers_part_of_the_object():
         b = np.asarray(render_sample("house", random.Random(t), cfg1).image).astype(int)
         diffs.append((np.abs(a - b).sum(axis=2) > 0).mean())
     assert np.mean(diffs) > 0.02
+
+
+def test_randomised_dials_vary_per_image_and_scalars_are_unchanged():
+    base = dict(image_size=64, palette="seen")
+    fixed = GenerationConfig(**base, clutter=True, noise_std=5.0)
+    fixed_again = GenerationConfig.from_dict({**base, "clutter": True, "noise_std": 5.0})
+    for t in range(3):
+        a = np.asarray(render_sample("car", random.Random(t), fixed).image)
+        b = np.asarray(render_sample("car", random.Random(t), fixed_again).image)
+        assert np.array_equal(a, b)
+    rand = GenerationConfig(**base, clutter=0.5, noise_std=[0.0, 15.0], blur_radius=[0.0, 0.8])
+    assert rand.appearance_enabled
+    white = []
+    for t in range(40):
+        img = np.asarray(render_sample("car", random.Random(t), rand).image)
+        white.append((img[0, 0] > 240).all())
+    # Some images keep a (near-)white background, some get clutter.
+    assert 0 < sum(white) < len(white)
