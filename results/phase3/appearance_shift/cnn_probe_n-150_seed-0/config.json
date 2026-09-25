@@ -1,0 +1,249 @@
+{
+  "config": {
+    "experiment": {
+      "phase": "phase3",
+      "experiment": "appearance_shift",
+      "image_size": 64,
+      "n_train_per_class": 150,
+      "n_val_per_class": 40,
+      "n_test_per_class": 100,
+      "distractor_prob": 0.0,
+      "view_angle_range": [
+        0,
+        30
+      ],
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "test_seed": 12345,
+      "epochs": 40,
+      "batch_size": 32,
+      "num_workers": 0,
+      "device": "auto",
+      "cache_dir": "data/cache",
+      "extractor_eval_samples": 200,
+      "shift": {
+        "name": "appearance",
+        "test": {
+          "texture": [
+            "noise",
+            "stripes",
+            "dots",
+            "photo"
+          ],
+          "palette": "unseen",
+          "clutter": true,
+          "occlusion_range": [
+            0.1,
+            0.4
+          ],
+          "noise_std": 10.0,
+          "blur_radius": 0.5
+        },
+        "tests": {
+          "app_flat": {},
+          "app_texture": {
+            "texture": [
+              "noise",
+              "stripes",
+              "dots",
+              "photo"
+            ]
+          },
+          "app_palette_unseen": {
+            "palette": "unseen"
+          },
+          "app_clutter": {
+            "clutter": true
+          },
+          "app_occlusion": {
+            "occlusion_range": [
+              0.1,
+              0.4
+            ]
+          },
+          "app_noise_blur": {
+            "noise_std": 15.0,
+            "blur_radius": 0.8
+          },
+          "app_combined": {
+            "texture": [
+              "noise",
+              "stripes",
+              "dots",
+              "photo"
+            ],
+            "palette": "unseen",
+            "clutter": true,
+            "occlusion_range": [
+              0.1,
+              0.4
+            ],
+            "noise_std": 10.0,
+            "blur_radius": 0.5
+          }
+        }
+      },
+      "models": [
+        {
+          "name": "cnn",
+          "kind": "cnn",
+          "augment": "none"
+        },
+        {
+          "name": "cnn_aug",
+          "kind": "cnn",
+          "augment": "standard"
+        },
+        {
+          "name": "cnn_aug_color",
+          "kind": "cnn",
+          "augment": "appearance"
+        },
+        {
+          "name": "cnn_probe",
+          "kind": "cnn",
+          "model_config": "cnn_probe",
+          "augment": "none"
+        },
+        {
+          "name": "gnn_oracle",
+          "kind": "gnn",
+          "extractor": "oracle"
+        },
+        {
+          "name": "gnn_classical",
+          "kind": "gnn",
+          "extractor": "classical_v2"
+        },
+        {
+          "name": "gnn_learned",
+          "kind": "gnn",
+          "extractor": "learned",
+          "extractor_weights": "results/phase2/learned_extractor/learned_phase2_0-30.pt"
+        },
+        {
+          "name": "gnn_learned_app",
+          "kind": "gnn",
+          "extractor": "learned",
+          "extractor_weights": "results/phase3/learned_extractor_appearance/learned_appearance.pt"
+        }
+      ],
+      "min_steps": 500
+    },
+    "model_spec": {
+      "name": "cnn_probe",
+      "kind": "cnn",
+      "model_config": "cnn_probe",
+      "augment": "none"
+    },
+    "seed": 0,
+    "n_train_per_class": 150,
+    "classes": [
+      "bicycle",
+      "car",
+      "truck",
+      "cat_face",
+      "house",
+      "tree",
+      "arrow_sign",
+      "snowman",
+      "person",
+      "fish"
+    ],
+    "condition": {
+      "name": "appearance",
+      "is_shift": true,
+      "changed": {
+        "texture": {
+          "train": "flat",
+          "test": [
+            "noise",
+            "stripes",
+            "dots",
+            "photo"
+          ]
+        },
+        "palette": {
+          "train": "default",
+          "test": "unseen"
+        },
+        "clutter": {
+          "train": false,
+          "test": true
+        },
+        "occlusion_range": {
+          "train": [
+            0.0,
+            0.0
+          ],
+          "test": [
+            0.1,
+            0.4
+          ]
+        },
+        "noise_std": {
+          "train": 0.0,
+          "test": 10.0
+        },
+        "blur_radius": {
+          "train": 0.0,
+          "test": 0.5
+        }
+      },
+      "extra_tests": {
+        "app_flat": {},
+        "app_texture": {
+          "texture": [
+            "noise",
+            "stripes",
+            "dots",
+            "photo"
+          ]
+        },
+        "app_palette_unseen": {
+          "palette": "unseen"
+        },
+        "app_clutter": {
+          "clutter": true
+        },
+        "app_occlusion": {
+          "occlusion_range": [
+            0.1,
+            0.4
+          ]
+        },
+        "app_noise_blur": {
+          "noise_std": 15.0,
+          "blur_radius": 0.8
+        },
+        "app_combined": {
+          "texture": [
+            "noise",
+            "stripes",
+            "dots",
+            "photo"
+          ],
+          "palette": "unseen",
+          "clutter": true,
+          "occlusion_range": [
+            0.1,
+            0.4
+          ],
+          "noise_std": 10.0,
+          "blur_radius": 0.5
+        }
+      }
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "timestamp_utc": "2026-09-25T05:40:34+00:00",
+    "git_commit": "18b72ac0ac8d6f01498bd9f741111240a9fe8f20",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false
+  }
+}
