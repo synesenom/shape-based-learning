@@ -23,6 +23,17 @@ without augmentation, plus an ImageNet fine-tune and a frozen ImageNet
 linear probe. A win measured against a weak baseline would not mean
 anything.
 
+## Contents
+
+- [Status](#status)
+- [Results so far](#results-so-far)
+- [Quick start](#quick-start)
+  - [Data](#data)
+- [Repository layout](#repository-layout)
+- [Experimental protocol](#experimental-protocol)
+- [Decisions and fixes along the way](#decisions-and-fixes-along-the-way)
+- [Further reading](#further-reading)
+
 ## Status
 
 | Step | What | Status |
