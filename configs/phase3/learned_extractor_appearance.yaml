@@ -14,10 +14,13 @@ train_overrides:
   view_angle_range: [0, 30]
   texture: [flat, noise, stripes, dots, photo]
   palette: seen
-  clutter: true
+  # Each dial randomised per image, including "off": the first version
+  # set clutter on every image (and fixed noise/blur), so the detector
+  # never saw a clean background and scored F1 0.47 on plain white ones.
+  clutter: 0.5
   occlusion_range: [0.0, 0.3]
-  noise_std: 8.0
-  blur_radius: 0.4
+  noise_std: [0.0, 15.0]
+  blur_radius: [0.0, 0.8]
 n_train_per_class: 600
 n_val_per_class: 40
 n_eval_per_class: 30

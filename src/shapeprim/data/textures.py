@@ -14,10 +14,17 @@ Every dial is a ``GenerationConfig`` field and off by default:
 - ``palette``: ``default`` (Phase 1's dark grey), ``seen`` (hues in
   [0, 180) degrees) or ``unseen`` (hues in [180, 360)), so a model can be
   trained on one set of colours and tested on colours it never saw;
-- ``clutter``: a textured background with random shapes and lines;
+- ``clutter``: a textured background with random shapes and lines
+  (``True``, or a probability per image);
 - ``occlusion_range``: fraction of the object covered by random occluders
   drawn on top (they are not ground-truth primitives);
-- ``noise_std`` (pixel noise, 0-255 scale) and ``blur_radius``.
+- ``noise_std`` (pixel noise, 0-255 scale) and ``blur_radius``, each a
+  number or a ``[lo, hi]`` range sampled per image.
+
+Randomising per image matters for anything trained on these images: a
+detector trained with clutter on *every* image never saw a clean
+background and failed on plain white ones (F1 0.47), while reaching 0.998
+on clutter in colours it had never seen.
 
 Part outlines are drawn in white as in Phase 1: they are the drawing
 convention that separates touching parts, not an appearance choice.
@@ -147,6 +154,20 @@ def clutter_background(size: int, rng: random.Random, np_rng: np.random.Generato
     return img
 
 
+def _sample(value, rng: random.Random) -> float:
+    """A number as-is, or a uniform draw from a ``[lo, hi]`` range."""
+    if isinstance(value, (list, tuple)):
+        lo, hi = value
+        return rng.uniform(float(lo), float(hi))
+    return float(value)
+
+
+def appearance_value_positive(value) -> bool:
+    if isinstance(value, (list, tuple)):
+        return max(float(v) for v in value) > 0
+    return bool(value) and float(value) > 0
+
+
 def _mask_of(p: Primitive, size: int) -> Image.Image:
     m = Image.new("L", (size, size), 0)
     ImageDraw.Draw(m).polygon(p.boundary_points(), fill=255)
@@ -161,14 +182,20 @@ def render_styled(
     palette: str = "default",
     base_color: Color = (40, 40, 40),
     background: Color = (255, 255, 255),
-    clutter: bool = False,
+    clutter=False,
     occlusion_range: Tuple[float, float] = (0.0, 0.0),
-    noise_std: float = 0.0,
-    blur_radius: float = 0.0,
+    noise_std=0.0,
+    blur_radius=0.0,
 ) -> Image.Image:
     """Draw ``primitives`` (in order) with the requested appearance."""
     np_rng = np.random.default_rng(rng.getrandbits(32))
-    img = clutter_background(size, rng, np_rng) if clutter else Image.new("RGB", (size, size), background)
+    if isinstance(clutter, bool):
+        use_clutter = clutter
+    else:
+        use_clutter = rng.random() < float(clutter)
+    noise_std = _sample(noise_std, rng)
+    blur_radius = _sample(blur_radius, rng)
+    img = clutter_background(size, rng, np_rng) if use_clutter else Image.new("RGB", (size, size), background)
     kinds = [texture] if isinstance(texture, str) else list(texture)
     object_mask = Image.new("L", (size, size), 0)
     # One colour per object (as in Phase 1, where every part of an object

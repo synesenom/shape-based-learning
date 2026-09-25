@@ -26,7 +26,7 @@ from PIL import Image, ImageDraw
 
 from .objects import CLASS_NAMES, CLASS_TEMPLATES, NOVEL_VARIANTS, ClassTemplate
 from .primitives import PRIMITIVE_TYPES, Primitive
-from .textures import render_styled
+from .textures import appearance_value_positive, render_styled
 from .transforms import ViewSample, apply_view, sample_view
 
 DEFAULT_COLOR = (40, 40, 40)
@@ -62,10 +62,10 @@ class GenerationConfig:
     # number is drawn for them unless one is enabled.
     texture: Any = "flat"  # "flat" or a list of noise/stripes/dots/photo
     palette: str = "default"  # default | seen | unseen
-    clutter: bool = False
+    clutter: Any = False  # bool, or a probability per image
     occlusion_range: Tuple[float, float] = (0.0, 0.0)
-    noise_std: float = 0.0
-    blur_radius: float = 0.0
+    noise_std: Any = 0.0  # number, or [lo, hi] sampled per image
+    blur_radius: Any = 0.0  # number, or [lo, hi] sampled per image
     # Phase 3b: draw primitives as outlines only (a sketch-like rendering of
     # the same ground truth), and the data source: "synthetic" or
     # "quickdraw" (data/real.py).
@@ -77,10 +77,10 @@ class GenerationConfig:
         return (
             self.texture != "flat"
             or self.palette != "default"
-            or self.clutter
+            or appearance_value_positive(self.clutter)
             or tuple(self.occlusion_range) != (0.0, 0.0)
-            or self.noise_std > 0
-            or self.blur_radius > 0
+            or appearance_value_positive(self.noise_std)
+            or appearance_value_positive(self.blur_radius)
         )
 
     @property
