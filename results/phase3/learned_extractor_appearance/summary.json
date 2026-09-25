@@ -1,0 +1,561 @@
+{
+  "config": {
+    "generation": {
+      "image_size": 64,
+      "distractor_prob": 0.0
+    },
+    "train_overrides": {
+      "view_angle_range": [
+        0,
+        30
+      ],
+      "texture": [
+        "flat",
+        "noise",
+        "stripes",
+        "dots",
+        "photo"
+      ],
+      "palette": "seen",
+      "clutter": 0.5,
+      "occlusion_range": [
+        0.0,
+        0.3
+      ],
+      "noise_std": [
+        0.0,
+        15.0
+      ],
+      "blur_radius": [
+        0.0,
+        0.8
+      ]
+    },
+    "n_train_per_class": 600,
+    "n_val_per_class": 40,
+    "n_eval_per_class": 30,
+    "epochs": 20,
+    "lr": 0.002,
+    "width": 32,
+    "threshold": 0.3,
+    "threads": 4,
+    "seed": 0,
+    "weights": "results/phase3/learned_extractor_appearance/learned_appearance.pt",
+    "report": "results/phase3/learned_extractor_appearance/summary.json",
+    "eval_conditions": {
+      "flat": {
+        "view_angle_range": [
+          0,
+          30
+        ]
+      },
+      "texture": {
+        "view_angle_range": [
+          0,
+          30
+        ],
+        "texture": [
+          "noise",
+          "stripes",
+          "dots",
+          "photo"
+        ]
+      },
+      "palette_unseen": {
+        "view_angle_range": [
+          0,
+          30
+        ],
+        "palette": "unseen"
+      },
+      "clutter": {
+        "view_angle_range": [
+          0,
+          30
+        ],
+        "clutter": true,
+        "palette": "unseen"
+      },
+      "occlusion": {
+        "view_angle_range": [
+          0,
+          30
+        ],
+        "occlusion_range": [
+          0.1,
+          0.4
+        ]
+      },
+      "noise_blur": {
+        "view_angle_range": [
+          0,
+          30
+        ],
+        "noise_std": 15.0,
+        "blur_radius": 0.8
+      },
+      "combined": {
+        "view_angle_range": [
+          0,
+          30
+        ],
+        "texture": [
+          "noise",
+          "stripes",
+          "dots",
+          "photo"
+        ],
+        "palette": "unseen",
+        "clutter": true,
+        "occlusion_range": [
+          0.1,
+          0.4
+        ],
+        "noise_std": 10.0,
+        "blur_radius": 0.5
+      }
+    }
+  },
+  "train_log": {
+    "history": [
+      {
+        "epoch": 0,
+        "train_loss": 4.038900018056234,
+        "val_loss": 2.231210012435913
+      },
+      {
+        "epoch": 1,
+        "train_loss": 1.6351100883483887,
+        "val_loss": 1.484112596511841
+      },
+      {
+        "epoch": 2,
+        "train_loss": 1.2235975030263264,
+        "val_loss": 1.2983430528640747
+      },
+      {
+        "epoch": 3,
+        "train_loss": 1.0429721123377482,
+        "val_loss": 1.350122447013855
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.9541717365582784,
+        "val_loss": 1.0756347179412842
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.8782555742263793,
+        "val_loss": 1.109656934738159
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.8132781410217285,
+        "val_loss": 0.9540903377532959
+      },
+      {
+        "epoch": 7,
+        "train_loss": 0.7516639340718587,
+        "val_loss": 0.9481784200668335
+      },
+      {
+        "epoch": 8,
+        "train_loss": 0.7020759949684143,
+        "val_loss": 0.9061366629600525
+      },
+      {
+        "epoch": 9,
+        "train_loss": 0.646125367641449,
+        "val_loss": 0.9421334075927734
+      },
+      {
+        "epoch": 10,
+        "train_loss": 0.5945630367596945,
+        "val_loss": 0.880397047996521
+      },
+      {
+        "epoch": 11,
+        "train_loss": 0.5484676132202149,
+        "val_loss": 0.9181616020202636
+      },
+      {
+        "epoch": 12,
+        "train_loss": 0.49831733433405556,
+        "val_loss": 0.922283034324646
+      },
+      {
+        "epoch": 13,
+        "train_loss": 0.44764048512776694,
+        "val_loss": 0.8917664384841919
+      },
+      {
+        "epoch": 14,
+        "train_loss": 0.4048174472649892,
+        "val_loss": 0.921583890914917
+      },
+      {
+        "epoch": 15,
+        "train_loss": 0.3635070110956828,
+        "val_loss": 0.9313258600234985
+      },
+      {
+        "epoch": 16,
+        "train_loss": 0.32709373577435813,
+        "val_loss": 0.9378084492683411
+      },
+      {
+        "epoch": 17,
+        "train_loss": 0.29888764437039694,
+        "val_loss": 0.9437418246269226
+      },
+      {
+        "epoch": 18,
+        "train_loss": 0.2816270004908244,
+        "val_loss": 0.9452971601486206
+      },
+      {
+        "epoch": 19,
+        "train_loss": 0.27185600543022154,
+        "val_loss": 0.9459532833099366
+      }
+    ],
+    "best_val_loss": 0.880397047996521,
+    "train_seconds": 797.8305535316467
+  },
+  "annotation_budget": {
+    "primitive_labelled_images": 6000,
+    "primitive_labels": 22800,
+    "train_generation": {
+      "image_size": 64,
+      "object_scale_range": [
+        0.5,
+        0.85
+      ],
+      "position_jitter": 0.08,
+      "part_size_jitter": 0.08,
+      "part_pos_jitter": 0.02,
+      "color": [
+        40,
+        40,
+        40
+      ],
+      "color_jitter": 15,
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "distractor_prob": 0.0,
+      "max_distractors": 2,
+      "template_set": "base",
+      "rotation_range": [
+        0.0,
+        0.0
+      ],
+      "shear_range": [
+        0.0,
+        0.0
+      ],
+      "squash_range": [
+        1.0,
+        1.0
+      ],
+      "view_angle_range": [
+        0.0,
+        30.0
+      ],
+      "camera_distance": 2.5,
+      "texture": [
+        "flat",
+        "noise",
+        "stripes",
+        "dots",
+        "photo"
+      ],
+      "palette": "seen",
+      "clutter": 0.5,
+      "occlusion_range": [
+        0.0,
+        0.3
+      ],
+      "noise_std": [
+        0.0,
+        15.0
+      ],
+      "blur_radius": [
+        0.0,
+        0.8
+      ],
+      "outline_only": false,
+      "source": "synthetic"
+    }
+  },
+  "conditions": {
+    "flat": {
+      "learned": {
+        "precision": 0.9994444444444446,
+        "recall": 0.9994444444444446,
+        "f1": 0.9994444444444446,
+        "f1_per_class": {
+          "bicycle": 1.0,
+          "car": 1.0,
+          "truck": 1.0,
+          "cat_face": 1.0,
+          "house": 1.0,
+          "tree": 1.0,
+          "arrow_sign": 1.0,
+          "snowman": 1.0,
+          "person": 0.9944444444444446,
+          "fish": 1.0
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.8376111111111109,
+        "recall": 0.7869999999999998,
+        "f1": 0.8055173160173157,
+        "f1_per_class": {
+          "bicycle": 0.4409764309764309,
+          "car": 0.9244444444444446,
+          "truck": 0.9333333333333336,
+          "cat_face": 0.6555555555555556,
+          "house": 0.7876984126984129,
+          "tree": 0.9166666666666666,
+          "arrow_sign": 0.9333333333333333,
+          "snowman": 0.9555555555555557,
+          "person": 0.5909427609427609,
+          "fish": 0.9166666666666666
+        },
+        "n_samples": 300
+      }
+    },
+    "texture": {
+      "learned": {
+        "precision": 0.9994444444444446,
+        "recall": 0.9994444444444446,
+        "f1": 0.9994444444444446,
+        "f1_per_class": {
+          "bicycle": 1.0,
+          "car": 1.0,
+          "truck": 1.0,
+          "cat_face": 1.0,
+          "house": 1.0,
+          "tree": 1.0,
+          "arrow_sign": 1.0,
+          "snowman": 1.0,
+          "person": 0.9944444444444446,
+          "fish": 1.0
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.8376111111111109,
+        "recall": 0.7869999999999998,
+        "f1": 0.8055173160173157,
+        "f1_per_class": {
+          "bicycle": 0.4409764309764309,
+          "car": 0.9244444444444446,
+          "truck": 0.9333333333333336,
+          "cat_face": 0.6555555555555556,
+          "house": 0.7876984126984129,
+          "tree": 0.9166666666666666,
+          "arrow_sign": 0.9333333333333333,
+          "snowman": 0.9555555555555557,
+          "person": 0.5909427609427609,
+          "fish": 0.9166666666666666
+        },
+        "n_samples": 300
+      }
+    },
+    "palette_unseen": {
+      "learned": {
+        "precision": 0.9927222222222224,
+        "recall": 0.9660555555555553,
+        "f1": 0.9718318903318904,
+        "f1_per_class": {
+          "bicycle": 1.0,
+          "car": 0.9814814814814815,
+          "truck": 0.9753030303030303,
+          "cat_face": 1.0,
+          "house": 0.9582010582010583,
+          "tree": 0.9722222222222221,
+          "arrow_sign": 0.9777777777777777,
+          "snowman": 0.87,
+          "person": 0.9944444444444446,
+          "fish": 0.9888888888888889
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.8376111111111109,
+        "recall": 0.7869999999999998,
+        "f1": 0.8055173160173157,
+        "f1_per_class": {
+          "bicycle": 0.4409764309764309,
+          "car": 0.9244444444444446,
+          "truck": 0.9333333333333336,
+          "cat_face": 0.6555555555555556,
+          "house": 0.7876984126984129,
+          "tree": 0.9166666666666666,
+          "arrow_sign": 0.9333333333333333,
+          "snowman": 0.9555555555555557,
+          "person": 0.5909427609427609,
+          "fish": 0.9166666666666666
+        },
+        "n_samples": 300
+      }
+    },
+    "clutter": {
+      "learned": {
+        "precision": 0.9927222222222222,
+        "recall": 0.992611111111111,
+        "f1": 0.9915582010582011,
+        "f1_per_class": {
+          "bicycle": 1.0,
+          "car": 0.9879629629629629,
+          "truck": 0.9933333333333334,
+          "cat_face": 1.0,
+          "house": 0.9821428571428572,
+          "tree": 1.0,
+          "arrow_sign": 0.9755555555555555,
+          "snowman": 0.9821428571428572,
+          "person": 0.9944444444444446,
+          "fish": 1.0
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.6155266955266946,
+        "recall": 0.7266666666666668,
+        "f1": 0.6476040484569919,
+        "f1_per_class": {
+          "bicycle": 0.40277777777777773,
+          "car": 0.8125835275835276,
+          "truck": 0.7759455794749913,
+          "cat_face": 0.5523809523809525,
+          "house": 0.6643386243386245,
+          "tree": 0.7024786324786326,
+          "arrow_sign": 0.7366666666666669,
+          "snowman": 0.7787301587301589,
+          "person": 0.3568052318052318,
+          "fish": 0.6933333333333334
+        },
+        "n_samples": 300
+      }
+    },
+    "occlusion": {
+      "learned": {
+        "precision": 0.9667777777777781,
+        "recall": 0.9625,
+        "f1": 0.9621499426499429,
+        "f1_per_class": {
+          "bicycle": 0.9263947163947166,
+          "car": 0.9664646464646466,
+          "truck": 0.9665319865319866,
+          "cat_face": 0.9822222222222223,
+          "house": 0.9731481481481482,
+          "tree": 0.9933333333333334,
+          "arrow_sign": 0.9866666666666667,
+          "snowman": 0.911904761904762,
+          "person": 0.954832944832945,
+          "fish": 0.9600000000000001
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.4421111111111113,
+        "recall": 0.3199444444444444,
+        "f1": 0.3617840307840314,
+        "f1_per_class": {
+          "bicycle": 0.19695286195286196,
+          "car": 0.4976190476190476,
+          "truck": 0.4634391534391534,
+          "cat_face": 0.5011111111111113,
+          "house": 0.32087301587301587,
+          "tree": 0.25,
+          "arrow_sign": 0.3,
+          "snowman": 0.4111111111111112,
+          "person": 0.2322895622895623,
+          "fish": 0.4444444444444444
+        },
+        "n_samples": 300
+      }
+    },
+    "noise_blur": {
+      "learned": {
+        "precision": 0.9986111111111112,
+        "recall": 0.9986111111111112,
+        "f1": 0.9986111111111112,
+        "f1_per_class": {
+          "bicycle": 1.0,
+          "car": 1.0,
+          "truck": 1.0,
+          "cat_face": 1.0,
+          "house": 0.9916666666666667,
+          "tree": 1.0,
+          "arrow_sign": 1.0,
+          "snowman": 1.0,
+          "person": 0.9944444444444446,
+          "fish": 1.0
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.5032222222222221,
+        "recall": 0.3510555555555558,
+        "f1": 0.39398725348725405,
+        "f1_per_class": {
+          "bicycle": 0.222962962962963,
+          "car": 0.3134920634920635,
+          "truck": 0.8874074074074075,
+          "cat_face": 0.22666666666666666,
+          "house": 0.07777777777777777,
+          "tree": 0.5166666666666667,
+          "arrow_sign": 0.4666666666666667,
+          "snowman": 0.24000000000000002,
+          "person": 0.21601010101010104,
+          "fish": 0.7722222222222223
+        },
+        "n_samples": 300
+      }
+    },
+    "combined": {
+      "learned": {
+        "precision": 0.9663333333333333,
+        "recall": 0.8938333333333329,
+        "f1": 0.914500962000962,
+        "f1_per_class": {
+          "bicycle": 0.9371717171717171,
+          "car": 0.853037518037518,
+          "truck": 0.9261111111111112,
+          "cat_face": 0.9217460317460319,
+          "house": 0.8133068783068783,
+          "tree": 0.948888888888889,
+          "arrow_sign": 0.9555555555555557,
+          "snowman": 0.8944444444444445,
+          "person": 0.9236363636363637,
+          "fish": 0.9711111111111113
+        },
+        "n_samples": 300
+      },
+      "classical_v2": {
+        "precision": 0.13561111111111115,
+        "recall": 0.08788888888888892,
+        "f1": 0.10102777777777774,
+        "f1_per_class": {
+          "bicycle": 0.14027777777777778,
+          "car": 0.11666666666666667,
+          "truck": 0.22666666666666663,
+          "cat_face": 0.14,
+          "house": 0.0,
+          "tree": 0.016666666666666666,
+          "arrow_sign": 0.05,
+          "snowman": 0.12000000000000001,
+          "person": 0.05,
+          "fish": 0.15
+        },
+        "n_samples": 300
+      }
+    }
+  }
+}
