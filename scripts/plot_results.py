@@ -77,6 +77,20 @@ DISPLAY_NAMES = {
     "bag_classical": "Bag (classical)",
     "gnn_oracle_max": "GNN (oracle, max pool)",
     "gnn_oracle_attn": "GNN (oracle, attention pool)",
+    "gnn_oracle_affine": "GNN (oracle, affine frame)",
+    "gnn_classical_affine": "GNN (classical, affine frame)",
+    "gnn_learned": "GNN (learned)",
+    "gnn_learned_affine": "GNN (learned, affine frame)",
+    "cnn_aug_view": "CNN + view aug",
+    "cnn_aug_view_rot": "CNN + view/rot aug",
+    "cnn_aug_color": "CNN + colour aug",
+    "gnn_learned_app": "GNN (appearance-trained detector)",
+    "gnn_strokefit": "GNN (stroke fit)",
+    "st_strokefit": "Set transformer (stroke fit)",
+    "bag_strokefit": "Bag (stroke fit)",
+    "gnn_samfit": "GNN (SAM fit)",
+    "st_samfit": "Set transformer (SAM fit)",
+    "bag_samfit": "Bag (SAM fit)",
 }
 
 
@@ -125,7 +139,81 @@ def model_order(conditions: Dict[str, dict]) -> List[str]:
     return known + [m for m in seen if m not in known]
 
 
+PANEL_SLOTS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]  # validated slots 1-4
+PANEL_MARKERS = ["o", "s", "^", "D"]
+
+
+def model_groups(models: List[str]) -> List[tuple]:
+    """Pixel / oracle-graph / extracted-graph panels of at most four series."""
+    pixel = [m for m in models if m.startswith("cnn")]
+    oracle = [m for m in models if not m.startswith("cnn") and "oracle" in m]
+    other = [m for m in models if m not in pixel and m not in oracle]
+    groups = []
+    for title, ms in (("Pixel models", pixel), ("Graph models, oracle primitives", oracle),
+                      ("Graph models, extracted primitives", other)):
+        for i in range(0, len(ms), 4):
+            groups.append((title if i == 0 else f"{title} (cont.)", ms[i:i + 4]))
+    return groups
+
+
+def plot_learning_curve_panels(summary: dict, out_path: Path, metric: str = "test_acc") -> None:
+    """Small multiples for many models: a colour is never reused within a panel."""
+    conditions = summary["conditions"]
+    sizes = sorted(int(k) for k in conditions)
+    groups = model_groups(model_order(conditions))
+    cols = min(len(groups), 2)
+    rows = (len(groups) + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(6.6 * cols, 4.3 * rows), dpi=170, squeeze=False)
+    fig.patch.set_facecolor(SURFACE)
+    flat = [a for row in axes for a in row]
+    for ax, (title, models) in zip(flat, groups):
+        _style_axes(ax)
+        ends = []
+        for i, model in enumerate(models):
+            pts = []
+            for n in sizes:
+                entry = conditions[str(n)].get(model, {}).get(metric)
+                mean = _value(entry)
+                if mean is not None:
+                    half = _ci(entry)
+                    pts.append((n, mean, max(0.0, mean - half), min(1.0, mean + half)))
+            if not pts:
+                continue
+            xs, ys, los, his = zip(*pts)
+            ax.fill_between(xs, los, his, color=PANEL_SLOTS[i], alpha=0.14, linewidth=0, zorder=2)
+            ax.plot(xs, ys, color=PANEL_SLOTS[i], linewidth=2, marker=PANEL_MARKERS[i], markersize=6,
+                    markeredgecolor=SURFACE, markeredgewidth=1.2, zorder=3, label=display_name(model))
+            ends.append([ys[-1], xs[-1], display_name(model)])
+        ends.sort(key=lambda e: -e[0])
+        for j in range(1, len(ends)):
+            ends[j][0] = min(ends[j][0], ends[j - 1][0] - 0.06)
+        for y, x, label in ends:
+            ax.annotate(label, xy=(x, y), xytext=(6, 0), textcoords="offset points",
+                        color=TEXT_SECONDARY, fontsize=7.5, va="center", annotation_clip=False)
+        ax.set_xscale("log")
+        ax.set_xticks(sizes)
+        ax.set_xticklabels([str(n) for n in sizes])
+        ax.set_xlim(right=sizes[-1] * 3.5)
+        ax.set_ylim(0, 1.03)
+        ax.set_xlabel("training examples per class", color=TEXT_SECONDARY, fontsize=9)
+        ax.set_ylabel("test accuracy", color=TEXT_SECONDARY, fontsize=9)
+        ax.set_title(title, color=TEXT_PRIMARY, fontsize=10, loc="left")
+        leg = ax.legend(frameon=False, fontsize=7.5, loc="lower right")
+        for t in leg.get_texts():
+            t.set_color(TEXT_SECONDARY)
+    for ax in flat[len(groups):]:
+        ax.axis("off")
+    n_seeds = len(summary.get("seeds", []))
+    fig.suptitle(f"Learning curves ({n_seeds} seeds, band = 95% CI)", color=TEXT_PRIMARY, fontsize=12,
+                 x=0.01, ha="left")
+    fig.tight_layout()
+    fig.savefig(out_path, facecolor=SURFACE)
+    plt.close(fig)
+
+
 def plot_learning_curve(summary: dict, out_path: Path, metric: str = "test_acc") -> None:
+    if len(model_order(summary["conditions"])) > 5:
+        return plot_learning_curve_panels(summary, out_path, metric)
     conditions = summary["conditions"]
     sizes = sorted(int(k) for k in conditions)
     models = model_order(conditions)

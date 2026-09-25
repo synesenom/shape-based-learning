@@ -15,8 +15,8 @@ each harder than the one before:
 | Phase | Data | Question | Status |
 |---|---|---|---|
 | 1 | Clean, flat 2D drawings (10 classes) | Does the shape-graph representation work at all? | **done**: [results](results/phase1/SUMMARY.md) |
-| 2 | The same drawings under rotation, shear and perspective | Is a bike at an angle still two ellipses and a triangle? | experiments running |
-| 3 | Textures, QuickDraw sketches, real photos | Does it survive realistic appearance? | code ready, queued |
+| 2 | The same drawings under rotation, shear and perspective | Is a bike at an angle still two ellipses and a triangle? | **done**: [results](results/phase2/SUMMARY.md) |
+| 3 | Textures, QuickDraw sketches, real photos | Does it survive realistic appearance? | experiments running |
 
 The hypotheses are sample efficiency (H1), relations matter (H2),
 viewpoint robustness (H3) and appearance robustness (H4). The Phase 1 CNN
@@ -116,6 +116,15 @@ primitive-model advantage shrinks or reverses.
 
 The earlier baseline table in `results/phase1/baseline/` was measured on
 dataset version 1, before the twin fix, and is superseded.
+
+**Phase 2 in one paragraph** ([full results](results/phase2/SUMMARY.md)).
+Trained on viewing angles 0–30°, the oracle GNN with an affine-normalised
+graph stays at 0.996 out to 70°, while every pixel model, including one
+trained with perspective augmentation, falls to 0.38–0.60. It is also
+more sample-efficient under viewpoint change (1.000 against 0.960 at 5
+examples per class). The advantage is lost in extraction, because both
+the classical extractor and the learned detector break down at steep
+angles: the learned detector's F1 falls from 1.0 to 0.16.
 
 ![Phase 1 sample grid](results/phase1/sample_grid.png)
 
