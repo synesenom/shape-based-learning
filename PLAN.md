@@ -1,5 +1,10 @@
 # PLAN.md — Shape-Primitive Object Recognition
 
+> **Status:**
+> - Phases 1 and 2 are done ([results](results/phase1/SUMMARY.md), [results](results/phase2/SUMMARY.md)).
+> - Phase 3a is half done; 3b and 3c are implemented but not run.
+> - The remaining work, how to resume, and open caveats are in [`docs/continuation_plan.md`](docs/continuation_plan.md).
+
 ## 1. Goal
 
 Test whether classifying objects from **generic geometric primitives and their spatial relations** generalizes better than a standard end-to-end CNN.

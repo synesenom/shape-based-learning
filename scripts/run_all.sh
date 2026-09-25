@@ -74,7 +74,10 @@ experiment() {  # experiment <phase> <name> [plot args...]
   local phase="$1" name="$2"; shift 2
   step "$name" python scripts/run_experiment.py --config "configs/$phase/$name.yaml" --resume
   python scripts/plot_results.py --summary "results/$phase/$name/summary.json" >>"$LOG_DIR/$name.log" 2>&1
-  if [ $# -gt 0 ]; then
+  if [ "${1:-}" = "--named" ]; then
+    # Categorical test conditions (appearance, real-image OOD sets).
+    python scripts/plot_named_tests.py --summary "results/$phase/$name/summary.json" --prefix "$2" >>"$LOG_DIR/$name.log" 2>&1
+  elif [ $# -gt 0 ]; then
     python scripts/plot_conditions.py --summary "results/$phase/$name/summary.json" "$@" >>"$LOG_DIR/$name.log" 2>&1
   fi
   checkpoint "$name plots"
@@ -101,8 +104,8 @@ experiment phase2 full_range --prefix angle --train-range 0 70 --xlabel "viewing
 # ---- Phase 3a ---------------------------------------------------------------
 [ -f results/phase3/learned_extractor_appearance/learned_appearance.pt ] || \
   step learned_extractor_appearance python scripts/train_learned_extractor.py --config configs/phase3/learned_extractor_appearance.yaml
-experiment phase3 appearance_shift
-experiment phase3 appearance_reverse
+experiment phase3 appearance_shift --named app
+experiment phase3 appearance_reverse --named rev
 
 # ---- Phase 3b ---------------------------------------------------------------
 step fetch_quickdraw python scripts/fetch_quickdraw.py
@@ -114,6 +117,6 @@ experiment phase3 quickdraw_cross_reverse
 # ---- Phase 3c ---------------------------------------------------------------
 step fetch_real python scripts/fetch_real_data.py
 step precompute_sam python scripts/precompute_sam.py --threads 4
-experiment phase3 real_images
+experiment phase3 real_images --named ood
 
 echo "=== $(date -u +%FT%TZ) all done" | tee -a "$LOG_DIR/run_all.log"

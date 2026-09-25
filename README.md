@@ -42,9 +42,12 @@ anything.
 | 2 | **Phase 1**: clean 2D drawings | merged (#8), [results](results/phase1/SUMMARY.md) |
 | 3 | Phase 2–3 code: viewpoint transforms, extractors, textures, QuickDraw, SAM-fit, resumable queue | merged (#7) |
 | 4 | **Phase 2**: viewpoint (rotation, shear, perspective) | merged (#9), [results](results/phase2/SUMMARY.md) |
-| 5 | **Phase 3a**: textures, colours, clutter, occlusion | running: flat→textured done, textured→flat in progress |
-| 6 | **Phase 3b**: QuickDraw sketches | queued |
-| 7 | **Phase 3c**: real photos, model-vs-human sets, final cross-phase figure | queued |
+| 5 | **Phase 3a**: textures, colours, clutter, occlusion | half done: flat→textured complete, textured→flat 1/18 runs |
+| 6 | **Phase 3b**: QuickDraw sketches | implemented, smoke-tested, not run |
+| 7 | **Phase 3c**: real photos, model-vs-human sets, final cross-phase figure | implemented and smoke-tested (figure script to write), not run |
+
+**Resuming:** the remaining work, how to resume, and the open caveats
+are in [`docs/continuation_plan.md`](docs/continuation_plan.md).
 
 CI runs the test suite on every push and pull request
 (`.github/workflows/tests.yml`).
@@ -91,10 +94,13 @@ gives the pixel side that data.
 ## Quick start
 
 ```bash
-# Python 3.10+; the CPU build of PyTorch is enough for everything here
+scripts/setup_env.sh            # CPU PyTorch + package + extras, then runs the tests
+scripts/setup_env.sh --data     # ... and fetches the Phase 3b/3c data
+
+# or by hand (Python 3.10+; the CPU build of PyTorch is enough)
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install -e ".[dev]"
-python -m pytest -q                       # ~230 tests, also run in CI
+pip install -e ".[dev,real]"    # "real" = transformers, for SAM-fit (Phase 3c)
+python -m pytest -q             # ~230 tests, also run in CI
 
 # one experiment
 python scripts/run_experiment.py --config configs/phase1/learning_curve.yaml --resume
@@ -157,6 +163,8 @@ scripts/    run_experiment.py  one experiment (models x sizes x seeds, shifts, n
             run_all.sh         the whole remaining plan, resumable
             plot_results.py    tables + learning-curve / shift figures
             plot_conditions.py accuracy vs a binned condition (angle, rotation)
+            plot_named_tests.py accuracy on named conditions (appearance, real-image OOD sets)
+            setup_env.sh       fresh-machine setup
             train_learned_extractor.py, precompute_sam.py, eval_classical.py,
             eval_strokefit.py, supersede_short_runs.py, fetch_*.py
 results/    <phase>/<experiment>/: summary.json, results.md, figures, one directory per run
@@ -214,5 +222,7 @@ acting. Its reasoning is summarised in the PR descriptions.
   against part-based, neuro-symbolic and sketch-graph work.
 - [`docs/experiment_protocol.md`](docs/experiment_protocol.md): how every
   number here was produced.
+- [`docs/continuation_plan.md`](docs/continuation_plan.md): what remains
+  and how to pick it up.
 
 ![Phase 1 sample grid](results/phase1/sample_grid.png)

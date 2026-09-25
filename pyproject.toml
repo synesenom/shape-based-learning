@@ -20,6 +20,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+# Phase 3c: SAM-fit extraction loads SlimSAM through transformers
+# (extract/sam_fit.py). Not needed for Phases 1-3b or the tests.
+real = ["transformers>=4.40", "safetensors"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
